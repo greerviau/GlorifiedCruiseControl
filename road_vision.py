@@ -17,7 +17,7 @@ def invert_frame(frame):
 	return frame
 
 CONF = 0.2
-position_camera = False
+position_camera = True
 record_raw = False
 record_processed = False
 show_visuals = True
@@ -27,12 +27,11 @@ lanes = True
 objects = True
 detect_all = False
 size = (640,360)
-region_of_interest = [[0.44,0.65],[0.59,0.65],[.95,.95],[.1,.95]]	# The polygon region of interest on the forward roadway
+region_of_interest = [[0.43,0.63],[0.57,0.63],[.95,.95],[.1,.95]]	# The polygon region of interest on the forward roadway
 roi_poly = mpltPath.Path(np.float32(region_of_interest)*np.float32(size))
 pipe_roi = [region_of_interest[0],region_of_interest[1],region_of_interest[3], region_of_interest[2]]
 
-#cap = cv2.VideoCapture('project_video.mp4')
-cap = cv2.VideoCapture('tests/test_09/test_09_raw.mp4')
+cap = cv2.VideoCapture('tests/test_10/test_10_raw.mp4')
 #cap = cv2.VideoCapture(cv2.CAP_DSHOW)
 cap.set(3, 1280)
 cap.set(4, 720)
@@ -151,7 +150,7 @@ while(True):
 					cv2.rectangle(vehicles_detected, (startX, startY), (endX, endY), color, 2)
 
 					label_1 = '{} ({:.0f}%)'.format(CLASSES[idx], confidence*100)
-					label_2 = 'dist: {:.0f}m'.format(object_dist)
+					label_2 = 'dist: {:.0f}ft'.format(object_dist)
 					label_3 = 'lane: {}'.format(lane)
 
 					y = startY - 5 if startY - 5 > 5 else endY + 5

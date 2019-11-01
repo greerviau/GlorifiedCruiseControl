@@ -51,49 +51,89 @@ def undistort(img, cal_dir='camera_calib.p'):
     
     return dst
 
-def color_grad_thresh(img, rgb_thresh=(150,255), h_thresh=(10,100), s_thresh=(80,255), sobel_thresh=(25,256), dir_thresh=(0.7, 1.4)):
-    
+def color_grad_thresh(img, rgb_thresh=(150,255), l_thresh=(80,255), sobel_thresh=(25,256), dir_thresh=(0.7, 1.4)):
+
+    area = img.shape[0] * img.shape[1]
+
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     gray = cv2.GaussianBlur(gray, (5,5), 0)
     #cv2.imshow('gray', gray)
 
     #REMOVE SHADOWS (AS BEST AS POSSIBLE)
-    m = np.max(gray)
-    mask = np.array(np.power(2, (255-gray)/34.5), dtype=np.uint8)
+    #m = np.max(gray)
+    #mask = np.array(np.power(2, (255-gray)/34.5), dtype=np.uint8)
     #cv2.imshow('mask', mask)
-    gray = gray + mask
-    gray = cv2.GaussianBlur(gray, (5,5), 0)
+    #gray = gray + mask
+    #gray = cv2.GaussianBlur(gray, (5,5), 0)
 
     #cv2.imshow('no shadows', gray)
 
-    r_channel = img[:,:,0]
-    g_channel = img[:,:,1]
-    b_channel = img[:,:,2]
+    #RGB COLOR SPACE
+    r_channel = img[:,:,0].copy()
+    g_channel = img[:,:,1].copy()
+    b_channel = img[:,:,2].copy()
+
+    '''
+    cv2.imshow('r channel', r_channel)
+    cv2.imshow('g channel', g_channel)
+
+    r_channel[(r_channel >= 20) & (r_channel <= 60)] *= 3
+    g_channel[(g_channel >= 20) & (g_channel <= 60)] *= 3
+
+    cv2.imshow('r channel boost', r_channel)
+    cv2.imshow('g channel boost', g_channel)
+    '''
 
     r_binary = np.zeros_like(r_channel)
-    r_binary[(r_channel >= rgb_thresh[0]) & (r_channel <= rgb_thresh[1])] = 1
+    r_binary[(r_channel >= np.max(r_channel)-30)] = 1
+    cv2.imshow('r bin', r_binary*255)
 
     g_binary = np.zeros_like(g_channel)
-    g_binary[(g_channel >= rgb_thresh[0]) & (g_channel <= rgb_thresh[1])] = 1
+    g_binary[(g_channel >= np.max(g_channel)-30)] = 1
+    cv2.imshow('g bin', g_binary*255)
 
-    hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
-    h_channel = hls[:,:,0]
-    l_channel = hls[:,:,1]
-    s_channel = hls[:,:,2]
+    '''
+    #LAB COLOR SPACE
+    lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB) 
+    l_channel = lab[:,:,0]
+    a_channel = lab[:,:,1]
+    b_channel = lab[:,:,2]
+    #cv2.imshow('l', l_channel)
+    #cv2.imshow('a', a_channel)
+    #cv2.imshow('b', b_channel)
+    '''
 
-    s_binary = np.zeros_like(s_channel)
-    s_binary[(s_channel >= s_thresh[0]) & (s_channel <= s_thresh[1])] = 1
+    # HSV COLOR SPACE
+    hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+    h_channel = hsv[:,:,0]
+    s_channel = hsv[:,:,1]
+    v_channel = hsv[:,:,2]
+    #cv2.imshow('hsv', hsv)
+    #cv2.imshow('h', h_channel)
+    #cv2.imshow('s', s_channel)
+    #cv2.imshow('v', v_channel)
 
-    h_binary = np.zeros_like(h_channel)
-    h_binary[(h_channel >= h_thresh[0]) & (h_channel <= h_thresh[1])] = 1
+    v_binary = np.zeros_like(v_channel)
+    v_binary[(v_channel >= np.max(v_channel)-30)] = 1
+    cv2.imshow('v bin', v_binary*255)
 
-    yuv = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
-    y_channel = yuv[:,:,0]
-    u_channel = yuv[:,:,1]
-    v_channel = yuv[:,:,2]
+    # YUV COLOR SPACE
+    ycrcb = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
+    y_channel = ycrcb[:,:,0]
+    cr_channel = ycrcb[:,:,1]
+    cb_channel = ycrcb[:,:,2]
+    #cv2.imshow('cr', cr_channel)
+    #cv2.imshow('cb', cb_channel)
 
-    u_binary = np.zeros_like(u_channel)
-    u_binary[(u_channel >= 0) & (u_channel <= 123)] = 1
+    cr_binary = np.zeros_like(cr_channel)
+    cr_binary[(cr_channel >= np.mean(cr_channel)+10)] = 1
+    cv2.imshow('cr bin', cr_binary*255)
+
+    cb_binary = np.zeros_like(cb_channel)
+    cb_binary[(cb_channel <= np.mean(cb_channel)-10)] = 1
+    cv2.imshow('cb bin', cb_binary*255)
+    '''
+    # SOBEL EDGE DETECTION
 
     sobel_y = np.absolute(cv2.Sobel(gray, cv2.CV_64F, 1, 0))
     sobel_x = np.absolute(cv2.Sobel(gray, cv2.CV_64F, 0, 1))
@@ -105,10 +145,21 @@ def color_grad_thresh(img, rgb_thresh=(150,255), h_thresh=(10,100), s_thresh=(80
     sobel_binary[(sobel_scaled_x > sobel_thresh[0]) & (sobel_scaled_x <= sobel_thresh[1])] = 1
     sobel_binary[(sobel_scaled_y > sobel_thresh[0]) & (sobel_scaled_y <= sobel_thresh[1])] = 1
     #cv2.imshow('sobel', sobel_binary*255)
-
-    combined_binary = np.zeros_like(sobel_binary)
-    combined_binary[(sobel_binary == 1) | (u_binary == 1) | (g_binary == 1) | (r_binary == 1)] = 1
-
+    
+    if np.sum(g_binary) > area/12: 
+        g_binary = np.zeros_like(g_binary)
+    if np.sum(r_binary) > area/12: 
+        r_binary = np.zeros_like(r_binary)
+    if np.sum(v_binary) > area/12: 
+        v_binary = np.zeros_like(v_binary)
+    if np.sum(cr_binary) > area/12: 
+        cr_binary = np.zeros_like(cr_binary)
+    if np.sum(cb_binary) > area/12: 
+        cb_binary = np.zeros_like(cb_binary)
+    '''
+    #cv2.waitKey(0) 
+    combined_binary = np.zeros_like(gray)
+    combined_binary[(g_binary == 1) | (r_binary == 1) | (v_binary == 1) | (cr_binary == 1) | (cb_binary == 1)] = 1
     return combined_binary
 
 
@@ -327,13 +378,14 @@ def vid_pipeline(img, cache, roi, show=True):
     img_slice = img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] # Create the ROI slice of the frame
     
     #pipe = hls_compute_binary(img_slice)  # Run initial video pipeline
-    thresh = color_grad_thresh(img_slice)
     
-    perspect = perspective_warp(thresh, roi=[roi[0][0], roi[1][0], roi[2][0], roi[3][0]]) # Warp the ROI to birdseye view
-    
+    perspect = perspective_warp(img_slice, roi=[roi[0][0], roi[1][0], roi[2][0], roi[3][0]]) # Warp the ROI to birdseye view
+
+    thresh = color_grad_thresh(perspect)
+
     # Run sliding windows to get the curve of each lane marker
     try:    
-        sliding, curves, _, _ = sliding_window(perspect, margin=100, nwindows=4, draw_windows=True)
+        sliding, curves, _, _ = sliding_window(thresh, margin=100, nwindows=4, draw_windows=True)
     except:
         curves = cache.get_last()
         sliding = np.zeros_like(img_slice)
@@ -376,7 +428,7 @@ def vid_pipeline(img, cache, roi, show=True):
     # Assemble the visual frame if requested
     visual_frame = None
     if show:
-        visual_frame = np.concatenate((cv2.cvtColor((thresh*255),cv2.COLOR_GRAY2BGR),sliding,lanes), axis=0)
+        visual_frame = np.concatenate((cv2.cvtColor((thresh*255),cv2.COLOR_GRAY2BGR),sliding,cv2.cvtColor(lanes, cv2.COLOR_RGB2BGR)), axis=0)
 
         line_y = thresh.shape[0]
         cv2.line(visual_frame, (0,line_y), (visual_frame.shape[1],line_y), (255,255,255), 2)

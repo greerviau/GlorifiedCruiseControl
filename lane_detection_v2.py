@@ -5,6 +5,8 @@ import pickle
 import time
 import math
 import glob
+import warnings 
+warnings.simplefilter('ignore', np.RankWarning)
 
 
 def calibrate(size=(1280,720)):
@@ -86,11 +88,11 @@ def color_grad_thresh(img, rgb_thresh=(150,255), l_thresh=(80,255), sobel_thresh
 
     r_binary = np.zeros_like(r_channel)
     r_binary[(r_channel >= np.max(r_channel)-30)] = 1
-    cv2.imshow('r bin', r_binary*255)
+    #cv2.imshow('r bin', r_binary*255)
 
     g_binary = np.zeros_like(g_channel)
     g_binary[(g_channel >= np.max(g_channel)-30)] = 1
-    cv2.imshow('g bin', g_binary*255)
+    #cv2.imshow('g bin', g_binary*255)
 
     '''
     #LAB COLOR SPACE
@@ -115,7 +117,7 @@ def color_grad_thresh(img, rgb_thresh=(150,255), l_thresh=(80,255), sobel_thresh
 
     v_binary = np.zeros_like(v_channel)
     v_binary[(v_channel >= np.max(v_channel)-30)] = 1
-    cv2.imshow('v bin', v_binary*255)
+    #cv2.imshow('v bin', v_binary*255)
 
     # YUV COLOR SPACE
     ycrcb = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
@@ -127,11 +129,11 @@ def color_grad_thresh(img, rgb_thresh=(150,255), l_thresh=(80,255), sobel_thresh
 
     cr_binary = np.zeros_like(cr_channel)
     cr_binary[(cr_channel >= np.mean(cr_channel)+10)] = 1
-    cv2.imshow('cr bin', cr_binary*255)
+    #cv2.imshow('cr bin', cr_binary*255)
 
     cb_binary = np.zeros_like(cb_channel)
     cb_binary[(cb_channel <= np.mean(cb_channel)-10)] = 1
-    cv2.imshow('cb bin', cb_binary*255)
+    #cv2.imshow('cb bin', cb_binary*255)
     '''
     # SOBEL EDGE DETECTION
 
@@ -145,7 +147,7 @@ def color_grad_thresh(img, rgb_thresh=(150,255), l_thresh=(80,255), sobel_thresh
     sobel_binary[(sobel_scaled_x > sobel_thresh[0]) & (sobel_scaled_x <= sobel_thresh[1])] = 1
     sobel_binary[(sobel_scaled_y > sobel_thresh[0]) & (sobel_scaled_y <= sobel_thresh[1])] = 1
     #cv2.imshow('sobel', sobel_binary*255)
-    
+    '''
     if np.sum(g_binary) > area/12: 
         g_binary = np.zeros_like(g_binary)
     if np.sum(r_binary) > area/12: 
@@ -156,8 +158,7 @@ def color_grad_thresh(img, rgb_thresh=(150,255), l_thresh=(80,255), sobel_thresh
         cr_binary = np.zeros_like(cr_binary)
     if np.sum(cb_binary) > area/12: 
         cb_binary = np.zeros_like(cb_binary)
-    '''
-    #cv2.waitKey(0) 
+
     combined_binary = np.zeros_like(gray)
     combined_binary[(g_binary == 1) | (r_binary == 1) | (v_binary == 1) | (cr_binary == 1) | (cb_binary == 1)] = 1
     return combined_binary
@@ -345,9 +346,9 @@ def get_curve(img, leftx, rightx):
     l_fit_x_int = left_fit_cr[0]*img.shape[0]**2 + left_fit_cr[1]*img.shape[0] + left_fit_cr[2]
     r_fit_x_int = right_fit_cr[0]*img.shape[0]**2 + right_fit_cr[1]*img.shape[0] + right_fit_cr[2]
     lane_center_position = (r_fit_x_int - l_fit_x_int) /2+l_fit_x_int
-    center = (car_pos - lane_center_position) * xm_per_pix / 10
+    offset = (car_pos - lane_center_position) * xm_per_pix / 10
     # Now our radius of curvature is in meters
-    return (left_curverad, right_curverad, center)
+    return (left_curverad, right_curverad, offset)
 
 def draw_lanes(img, left_fit, right_fit, roi):
     ploty = np.linspace(0, img.shape[0]-1, img.shape[0])
@@ -386,36 +387,46 @@ def vid_pipeline(img, cache, roi, show=True):
     # Run sliding windows to get the curve of each lane marker
     try:    
         sliding, curves, _, _ = sliding_window(thresh, margin=100, nwindows=4, draw_windows=True)
+
+        left_angle = np.rad2deg(np.arctan2(len(curves[0]), curves[0][-1] - curves[0][0]))
+        right_angle = np.rad2deg(np.arctan2(len(curves[1]), curves[1][-1] - curves[1][0]))
+        center_angle = np.mean([left_angle, right_angle])
+
+        #print(center_angle)
+
+        curverad = get_curve(img_slice, curves[0], curves[1])   # Calculate the curve radius of each lane line
+
+        if not cache.empty():
+            curverad_mean = cache.mean(3)   # Take mean of the cached lane curves
+            # Adjust lane curves to equal mean of cache and current lane curves (this will reduce large variance between frames)
+            curverad = np.mean(np.stack([curverad_mean, curverad]),axis=0)
+
+            angle_mean = cache.mean(6)
+            center_angle = np.mean(np.stack([angle_mean, center_angle]), axis=0)
+        
+        lane_curve = np.mean([curverad[0], curverad[1]])    # Calculate the average radius
+
+        center = np.mean([curves[0], curves[1]], axis=0)
+
+        turn = 'straight'
+
+        if center_angle < 90.0:
+            turn = 'left'
+        elif center_angle > 110.0:
+            turn = 'right'
+
+        vehicle_offset =  curverad[2]   # Get the vehicle offset
+
+        # Get the lane polygon
+        lanes = draw_lanes(img_slice, curves[0], curves[1], roi=[roi[0][0], roi[1][0], roi[2][0], roi[3][0]])
+
+        cache.add([roi, sliding, curves, curverad, lane_curve, center, center_angle, turn, vehicle_offset, lanes])
+
     except:
-        curves = cache.get_last()
-        sliding = np.zeros_like(img_slice)
+        roi, sliding, curves, curverad, lane_curve, center, center_angle, turn, vehicle_offset, lanes = cache.get_last()
 
-    if not cache.empty():
-        cache_mean = cache.mean()   # Take mean of the cached lane curves
-        # Adjust lane curves to equal mean of cache and current lane curves (this will reduce large variance between frames)
-        curves = np.mean(np.stack([cache_mean, np.array(curves)]),axis=0)
-    
-    curverad = get_curve(img_slice, curves[0], curves[1])   # Calculate the curve radius of each lane line
-
-    cache.add(curves)   # Add adjusted lane curves to cache
-   
-    lane_curve = np.mean([curverad[0], curverad[1]])    # Calculate the average radius
-
-    center = np.mean([curves[0], curves[1]], axis=0)
-    direction = center[0] - center[center.shape[0]-1]
-
-    turn = 'straight'
-
-    if direction < -20:
-        turn = 'left'
-    elif direction > 20:
-        turn = 'right'
-
-    vehicle_offset =  curverad[2]   # Get the vehicle offset
-
-    # Get the lane polygon
-    lanes = draw_lanes(img_slice, curves[0], curves[1], roi=[roi[0][0], roi[1][0], roi[2][0], roi[3][0]])
     # Add the lane polygon to the output image
+    img_slice = img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :]
     img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] = cv2.addWeighted(img_slice, 1, lanes, 0.7, 0)
     
     cv2.putText(img, 'Left Curve: {:.0f} m'.format(curverad[0]), (10, 30), font, fontSize, fontColor, thickness)

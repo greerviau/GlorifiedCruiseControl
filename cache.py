@@ -14,8 +14,9 @@ class Cache():
             del self.cache[0]
             self.size = self.max_size
     
-    def mean(self):
-        return np.mean(np.array(self.cache), axis=0)
+    def mean(self, i):
+        column = [element[i] for element in self.cache]
+        return np.mean(np.array(column), axis=0)
 
     def empty(self):
         return self.size == 0
@@ -25,6 +26,12 @@ class Cache():
 
     def get_last(self):
         return self.cache[self.size-1]
+
+    def get_all(self):
+        return self.cache
+    
+    def get_all_index(self, i):
+        return [row[i] for row in self.cache]
 
     def print_cache(self):
         for e in self.cache:

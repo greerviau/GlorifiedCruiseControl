@@ -23,6 +23,7 @@ class VPS(object):
 	lanes = True, 
 	objects = True, 
 	detect_all = False, 
+	cache_size = 5,
 	size = (640,360), 
 	region_of_interest = [[0.43,0.63],[0.57,0.63],[.95,.95],[.05,.95]]):
 
@@ -45,18 +46,19 @@ class VPS(object):
 
 		#print(slope_left, slope_right)
 
-		self.lane_cache = Cache(max_size=5)	
+		self.lane_cache = Cache(max_size=cache_size)	
 		# Cache stores previous lane curves so that when calculating new curves
 		# if there is a large variance then it is reduced by taking the mean
 		# with the cached lane curves
 
-		#Calibrate the camera
+		# Calibrate the camera
 		if calib:
 			ld.calibrate(size=size)
 
 		# Init some variables for object detection
 		if objects:
 			print("[INFO] loading model...")
+			# Load the pretrained Object Detection Model
 			self.net = cv2.dnn.readNetFromCaffe("mobilenetssd/MobileNetSSD_deploy.prototxt.txt", "mobilenetssd/MobileNetSSD_deploy.caffemodel")
 
 			self.CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",

@@ -23,6 +23,8 @@ class VPS(object):
 	lanes = True, 
 	objects = True, 
 	detect_all = False, 
+	return_data = False,
+	readout = True,
 	cache_size = 5,
 	size = (640,360), 
 	region_of_interest = [[0.43,0.63],[0.57,0.63],[.95,.95],[.05,.95]]):
@@ -35,6 +37,8 @@ class VPS(object):
 		self.lanes = lanes
 		self.objects = objects
 		self.detect_all = detect_all
+		self.return_data = return_data
+		self.readout = readout
 		self.size = size
 		self.region_of_interest = region_of_interest
 
@@ -184,18 +188,20 @@ class VPS(object):
 						else:
 							lane = 'left'
 						
-						cv2.rectangle(vehicles_detected_slice, midpoint, midpoint, color, 5)
+						#cv2.rectangle(vehicles_detected_slice, midpoint, midpoint, color, 5)
 						cv2.rectangle(vehicles_detected_slice, (startX, startY), (endX, endY), color, 2)
+						cv2.rectangle(vehicles_detected_slice, (startX, startY), (endX, endY), [int(c * 0.4) for c in color], -1)
 
-						label_1 = '{} ({:.0f}%)'.format(self.CLASSES[idx], confidence*100)
-						label_2 = 'dist: {:.0f}ft'.format(object_dist)
+						#label_1 = '{} ({:.0f}%)'.format(self.CLASSES[idx], confidence*100)
+						label_1 = '{}'.format(self.CLASSES[idx])
+						#label_2 = 'dist: {:.0f}ft'.format(object_dist)
 						label_3 = 'lane: {}'.format(lane)
 
 						y = startY - 5 if startY - 5 > 5 else endY + 5
 
 						cv2.putText(vehicles_detected_slice, label_1, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255,255,255), 1)
-						cv2.putText(vehicles_detected_slice, label_2, (startX, y+H+15), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255,255,255), 1)
-						cv2.putText(vehicles_detected_slice, label_3, (startX, y+H+25), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255,255,255), 1)
+						#cv2.putText(vehicles_detected_slice, label_2, (startX, y+H+15), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255,255,255), 1)
+						cv2.putText(vehicles_detected_slice, label_3, (startX, y+H+15), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255,255,255), 1)
 
 			#cv2.imshow('slice', np.maximum(frame_slice, vehicles_detected_slice))
 			vehicles_detected[math.ceil(h/2.5):h,:] = vehicles_detected_slice
@@ -212,7 +218,8 @@ class VPS(object):
 			turn = detection_data[5]
 			visuals = detection_data[6]
 
-			print('\rLeft Curve: {:6.0f}\tRight Curve: {:6.0f}\tCenter Curve: {:6.0f}\tVehicle Offset: {:.4f}\t\tTurn: {}\t\t\t'.format(left_curve, right_curve, lane_curve, vehicle_offset, turn), end='')
+			if self.readout:
+				print('\rLeft Curve: {:6.0f}\tRight Curve: {:6.0f}\tCenter Curve: {:6.0f}\tVehicle Offset: {:.4f}\t\tTurn: {}\t\t\t'.format(left_curve, right_curve, lane_curve, vehicle_offset, turn), end='')
 
 			processed_frame = cv2.cvtColor(processed_frame, cv2.COLOR_RGB2BGR)
 			draw_region_of_interest = [pipe_roi_detected[0], pipe_roi_detected[1], pipe_roi_detected[3], pipe_roi_detected[2]]
@@ -224,7 +231,9 @@ class VPS(object):
 		if self.record_processed:
 			self.out_processed.write(processed_frame)
 
-		return processed_frame
+		if not self.return_data:
+			return processed_frame
+		return (left_curve, right_curve, lane_curve, vehicle_offset, turn), processed_frame
 
 
 if __name__ == "__main__":

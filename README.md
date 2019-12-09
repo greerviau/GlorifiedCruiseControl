@@ -36,5 +36,11 @@ A pretrained implementation of Google MobileNetSSD Network that detects vehicles
 ## Prediction Network
 A Neural Network that takes in the data collected from the perception system and predicts the driving controls (steering wheel angle, throttle, brake)
 
-## Refferences
-
+## References
+### MobileNet-SSD Object Detection
+https://github.com/chuanqi305/MobileNet-SSD
+### Advanced Lane Detection
+https://towardsdatascience.com/teaching-cars-to-see-advanced-lane-detection-using-computer-vision-87a01de0424f
+https://towardsdatascience.com/advanced-lane-detection-for-autonomous-vehicles-using-computer-vision-techniques-f229e4245e41
+### OBD Python Library
+https://python-obd.readthedocs.io/en/latest/

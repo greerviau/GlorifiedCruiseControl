@@ -119,7 +119,7 @@ def color_grad_thresh(img, rgb_thresh=(150,255), l_thresh=(80,255), sobel_thresh
     v_binary[(v_channel >= np.max(v_channel)-30)] = 1
     #cv2.imshow('v bin', v_binary*255)
 
-    # YUV COLOR SPACE
+    # YCRCB COLOR SPACE
     ycrcb = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
     y_channel = ycrcb[:,:,0]
     cr_channel = ycrcb[:,:,1]
@@ -427,7 +427,7 @@ def vid_pipeline(img, cache, roi, show=True):
 
     # Add the lane polygon to the output image
     img_slice = img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :]
-    img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] = cv2.addWeighted(img_slice, 1, lanes, 0.7, 0)
+    img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] = cv2.addWeighted(img_slice, 1, lanes, 0.5, 0)
     
     cv2.putText(img, 'Left Curve: {:.0f} m'.format(curverad[0]), (10, 30), font, fontSize, fontColor, thickness)
     cv2.putText(img, 'Right Curve: {:.0f} m'.format(curverad[1]), (10, 50), font, fontSize, fontColor, thickness)

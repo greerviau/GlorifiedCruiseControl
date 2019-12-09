@@ -181,8 +181,8 @@ while True:
     visual_frame[380:380+acc_graph.shape[0],750:750+acc_graph.shape[1]] = acc_graph
 
     #cv2.imshow('frame', frame)
-    #cv2.imshow('Interface', visual_frame)
-    inter_out.write(visual_frame)
+    cv2.imshow('Interface', visual_frame)
+    #inter_out.write(visual_frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 

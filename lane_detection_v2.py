@@ -395,7 +395,7 @@ def vid_pipeline(img, cache, roi, show=True):
         #print(center_angle)
 
         curverad = get_curve(img_slice, curves[0], curves[1])   # Calculate the curve radius of each lane line
-
+        '''
         if not cache.empty():
             curverad_mean = cache.mean(3)   # Take mean of the cached lane curves
             # Adjust lane curves to equal mean of cache and current lane curves (this will reduce large variance between frames)
@@ -403,7 +403,7 @@ def vid_pipeline(img, cache, roi, show=True):
 
             angle_mean = cache.mean(6)
             center_angle = np.mean(np.stack([angle_mean, center_angle]), axis=0)
-        
+        '''
         lane_curve = np.mean([curverad[0], curverad[1]])    # Calculate the average radius
 
         center = np.mean([curves[0], curves[1]], axis=0)
@@ -421,6 +421,10 @@ def vid_pipeline(img, cache, roi, show=True):
         lanes = draw_lanes(img_slice, curves[0], curves[1], roi=[roi[0][0], roi[1][0], roi[2][0], roi[3][0]])
 
         cache.add([roi, sliding, curves, curverad, lane_curve, center, center_angle, turn, vehicle_offset, lanes])
+
+        median_index = cache.median_index(3)
+        
+        roi, sliding, curves, curverad, lane_curve, center, center_angle, turn, vehicle_offset, lanes = cache.get_index(median_index)
 
     except:
         roi, sliding, curves, curverad, lane_curve, center, center_angle, turn, vehicle_offset, lanes = cache.get_last()

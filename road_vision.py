@@ -77,7 +77,10 @@ class VPS(object):
 		if record_processed:
 			if not os.path.exists('tests/'+sys.argv[1]):
 				os.makedirs('tests/'+sys.argv[1])
-			self.out_processed = cv2.VideoWriter('tests/{}/{}_processed.mp4'.format(sys.argv[1],sys.argv[1]),cv2.VideoWriter_fourcc(*'XVID'), 30, (size[0]*2, size[1]))
+			width = size[0]
+			if self.show_visuals:
+				width = size[0]*2
+			self.out_processed = cv2.VideoWriter('tests/{}/{}_processed.mp4'.format(sys.argv[1],sys.argv[1]),cv2.VideoWriter_fourcc(*'XVID'), 30, (width, size[1]))
 
 		if position_camera:
 			while(True):
@@ -104,7 +107,7 @@ class VPS(object):
 			self.out_raw.release()
 		if self.record_processed:
 			self.out_processed.release()
-		#print('VPS Destroyed')
+		print('VPS Destroyed')
 
 	def invert_frame(self, frame):
 		(H,W) = frame.shape[:2]
@@ -242,7 +245,7 @@ if __name__ == "__main__":
 	cap.set(3, 1280)
 	cap.set(4, 720)
 
-	vps = VPS()
+	vps = VPS(show_visuals=False, record_processed=True)
 
 	while True:
 		ret, frame = cap.read()

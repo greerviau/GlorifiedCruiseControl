@@ -46,13 +46,13 @@ def bar_graph(data, labels, ylim, size):
 
     return graph_frame
 
-def line_graph(data, avg, size):
+def line_graph(data, avg, ylim, size):
     data_length = len(data)
     font = cv2.FONT_HERSHEY_SIMPLEX
     graph_frame = np.zeros((340,440,3))
     cv2.line(graph_frame, (40,300-int(avg*300)), (440,300-int(avg*300)), (0,0,255), 2)
     #print(len(data))
-    spacing = math.floor(400 / 50)
+    spacing = math.floor(400 / ylim)
     current_point = data[0][0]
     for i, element in enumerate(data,1):
         next_point = element[0]
@@ -108,7 +108,7 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 graphs = 50
 add_to_graph = 1
 
-acc_cache = Cache(max_size=50)
+acc_cache = Cache(max_size=100)
 acc = rnd.random()
 acc_cache.add([acc])
 
@@ -176,7 +176,7 @@ while True:
     #print([acc])
     acc_cache.add([acc])
 
-    acc_graph = line_graph(acc_cache.get_all(), acc_cache.mean(0), (400,300))
+    acc_graph = line_graph(acc_cache.get_all(), acc_cache.mean(0), 100, (400,300))
 
     visual_frame[380:380+acc_graph.shape[0],750:750+acc_graph.shape[1]] = acc_graph
 

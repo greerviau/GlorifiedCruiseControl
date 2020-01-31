@@ -18,6 +18,14 @@ class Cache():
         column = [element[i] for element in self.cache]
         return np.mean(np.array(column), axis=0)
 
+    def median(self, i):
+        column = [element[i] for element in self.cache]
+        return np.median(np.array(column), axis=0)
+
+    def median_index(self, i):
+        column = [element[i] for element in self.cache]
+        return column.index(np.median(column))
+
     def empty(self):
         return self.size == 0
 
@@ -32,6 +40,12 @@ class Cache():
     
     def get_all_index(self, i):
         return [row[i] for row in self.cache]
+
+    def get_at_index(self, i, j):
+        return [row[i] for row in self.cache][j]
+
+    def get_index(self, i):
+        return self.cache[i]
 
     def print_cache(self):
         for e in self.cache:

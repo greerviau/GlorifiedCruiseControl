@@ -134,6 +134,8 @@ class VPS(object):
 		pipe_roi_detected = [self.pipe_roi[0].copy(),self.pipe_roi[1].copy(),self.pipe_roi[2].copy(),self.pipe_roi[3].copy()]
 		current_newY = self.pipe_roi[0][1]
 
+		vehicle_packet = []
+
 		if self.objects:
 			# Grab the frame dimensions and convert it to a blob
 			(h, w) = frame.shape[:2]
@@ -200,6 +202,8 @@ class VPS(object):
 						#label_2 = 'dist: {:.0f}ft'.format(object_dist)
 						label_3 = 'lane: {}'.format(lane)
 
+						vehicle_packet.append((confidence, self.CLASSES[idx], object_dist, lane))
+
 						y = startY - 5 if startY - 5 > 5 else endY + 5
 
 						cv2.putText(vehicles_detected_slice, label_1, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255,255,255), 1)
@@ -209,6 +213,13 @@ class VPS(object):
 			#cv2.imshow('slice', np.maximum(frame_slice, vehicles_detected_slice))
 			vehicles_detected[math.ceil(h/2.5):h,:] = vehicles_detected_slice
 		#cv2.imshow('vehicles', vehicles_detected)
+
+		while len(vehicle_packet) < 5:
+			vehicle_packet.append((0,None,0,None))
+
+		vehicle_packet = sorted(vehicle_packet, key=lambda l:l[2], reverse=True)
+		vehicle_packet = list(np.array(vehicle_packet)[:5])
+
 		if self.lanes:
 			rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 			detection_data = ld.vid_pipeline(rgb_frame, cache=self.lane_cache, roi=pipe_roi_detected, show=self.show_visuals)
@@ -236,22 +247,24 @@ class VPS(object):
 
 		if not self.return_data:
 			return processed_frame
-		return (left_curve, right_curve, lane_curve, vehicle_offset, turn), processed_frame
+		return (left_curve, right_curve, lane_curve, vehicle_offset, turn), vehicle_packet, processed_frame
 
 
 if __name__ == "__main__":
-	cap = cv2.VideoCapture('tests/test_10/test_10_raw.mp4')
+	cap = cv2.VideoCapture('project_video.mp4')
 	#cap = cv2.VideoCapture(cv2.CAP_DSHOW)
 	cap.set(3, 1280)
 	cap.set(4, 720)
 
-	vps = VPS(show_visuals=False, record_processed=True)
+	vps = VPS(show_visuals=False, readout=False, record_processed=False, return_data=True)
 
 	while True:
 		ret, frame = cap.read()
 		if not ret:
 			break
-		frame = vps.road_vision(frame)
+		lane_data, vehicle_data, frame = vps.road_vision(frame)
+		print(lane_data)
+		print(vehicle_data)
 
 		cv2.imshow('VPS', frame)
 		if cv2.waitKey(1) & 0xFF == ord('q'):

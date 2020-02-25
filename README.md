@@ -6,23 +6,23 @@ A perception system that detects lanes and vehicles from a video feed of the roa
 
 ## TODO
 * Perception System
-  * Fix problem with shadows casted on lane lines
-  * Increase accuracy
+  * [x] Fix problem with shadows casted on lane lines (This is too difficult to worry about)
+  * [x] Increase accuracy
 * Reading Sensors
-  * Reading sensor data from OBDII port
-  * Plan B for SAS, use a gyroscopic sensor to measure angle.
+  * [ ] Reading sensor data from OBDII port (UPDATE: Need to use Panda Adapter, ELM327 cannot read SAS)
+  * [ ] ~~Plan B for SAS, use a gyroscopic sensor to measure angle.~~ (This doesnt work)
 * Data Collection
-  * Start with interstate data (10 HRS)
+  * [ ] Start with interstate data (10 HRS)
 * Design Prediction Model
   * Possible Architectures
-    * Feed Forward
-    * LSTM (RNN)
+    * [ ] Feed Forward
+    * [ ] LSTM (RNN)
+    * [ ] CONV Net on raw video frames
 * Train Model
-  * Test for accuracy and avoid overfitting
-* Design Testing Visialization
-* Graphing predictions vs ground truth
-* Test Model In Real World
-  * Drive with system in real time
+  * [ ] Test for accuracy and avoid overfitting
+* [ ] Design Testing Visialization
+* [ ] Graphing predictions vs ground truth
+* [ ] Test Model In Real World
 
 ## Perception System
 An opencv system that detects lane lines and vehicles. 

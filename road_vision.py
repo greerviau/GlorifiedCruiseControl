@@ -3,6 +3,7 @@ import cv2
 import math
 import sys
 import os
+from utils import invert_frame
 import lane_detection_v2 as ld
 from cache import Cache
 import matplotlib.path as mpltPath
@@ -15,6 +16,7 @@ class VPS(object):
 	def __init__ (self, 
 	CONF = 0.2,
 	position_camera = False,
+	record_file = None,
 	record_raw = False,
 	record_processed = False,
 	show_visuals = True,
@@ -69,20 +71,27 @@ class VPS(object):
 						"bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
 						"dog", "horse", "motorbike", "person", "pottedplant", "sheep",
 						"sofa", "train", "tvmonitor"]
-
-		if record_raw:
-			if not os.path.exists('tests/'+sys.argv[1]):
-				os.makedirs('tests/'+sys.argv[1])
-			self.out_raw = cv2.VideoWriter('tests/{}/{}_raw.mp4'.format(sys.argv[1],sys.argv[1]),cv2.VideoWriter_fourcc(*'XVID'), 30, (1280,720))
-		if record_processed:
-			if not os.path.exists('tests/'+sys.argv[1]):
-				os.makedirs('tests/'+sys.argv[1])
-			width = size[0]
-			if self.show_visuals:
-				width = size[0]*2
-			self.out_processed = cv2.VideoWriter('tests/{}/{}_processed.mp4'.format(sys.argv[1],sys.argv[1]),cv2.VideoWriter_fourcc(*'XVID'), 30, (width, size[1]))
+		try:
+			if record_raw and record_file is not None:
+				if not os.path.exists('tests/'+record_file):
+					os.makedirs('tests/'+record_file)
+				self.out_raw = cv2.VideoWriter('tests/{}/{}_raw.mp4'.format(record_file,record_file),cv2.VideoWriter_fourcc(*'XVID'), 30, (1280,720))
+			if record_processed and record_file is not None:
+				if not os.path.exists('tests/'+record_file):
+					os.makedirs('tests/'+record_file)
+				width = size[0]
+				if self.show_visuals:
+					width = size[0]*2
+				self.out_processed = cv2.VideoWriter('tests/{}/{}_processed.mp4'.format(record_file,record_file),cv2.VideoWriter_fourcc(*'XVID'), 30, (width, size[1]))
+		except:
+			print('Record File Not Specified!')
+			sys.exit()
 
 		if position_camera:
+
+			cap = cv2.VideoCapture(cv2.CAP_DSHOW)
+			cap.set(3, 1280)
+			cap.set(4, 720)
 			while(True):
 				# ret = True/False if there is a next frame
 				# frame = numpy pixel array
@@ -109,20 +118,13 @@ class VPS(object):
 			self.out_processed.release()
 		print('VPS Destroyed')
 
-	def invert_frame(self, frame):
-		(H,W) = frame.shape[:2]
-		center = (W/2, H/2)
-		M = cv2.getRotationMatrix2D(center, 180, 1.0)
-		frame = cv2.warpAffine(frame, M, (W,H))
-		return frame
-
 	def road_vision(self, frame):
 		
 		# ret = True/False if there is a next frame
 		# frame = numpy pixel array
 
 		if self.invert:
-			frame = self.invert_frame(frame)
+			frame = sinvert_frame(frame)
 
 		if self.record_raw:
 			self.out_raw.write(cv2.resize(frame, (1280, 720), interpolation = cv2.INTER_AREA))
@@ -169,7 +171,7 @@ class VPS(object):
 
 						W,H = (endX-startX), (endY-startY)
 
-						object_dist = ((self.size[0] / W) * (self.size[1] / H))
+						object_dist = ((W/self.size[0]) * (H/self.size[1]))*100
 
 						lane = ''
 
@@ -177,7 +179,7 @@ class VPS(object):
 
 						color = (0,255,0)
 						if self.roi_poly.contains_points([midpoint]) or (midpoint[0] > self.region_of_interest[0][0]*self.size[0] and midpoint[0] < self.region_of_interest[1][0]*self.size[0]):
-							color = (255,0,0)
+							color = (255,255,0)
 							lane = 'mine'
 							if endY+math.ceil(h/2.5) > self.pipe_roi[0][1]*h:
 								newY = round((endY+math.ceil(h/2.5)) / h,2)
@@ -195,20 +197,20 @@ class VPS(object):
 						
 						#cv2.rectangle(vehicles_detected_slice, midpoint, midpoint, color, 5)
 						cv2.rectangle(vehicles_detected_slice, (startX, startY), (endX, endY), color, 2)
-						cv2.rectangle(vehicles_detected_slice, (startX, startY), (endX, endY), [int(c * 0.4) for c in color], -1)
+						cv2.rectangle(vehicles_detected_slice, (startX, startY), (endX, endY), [int(c * 0.2) for c in color], -1)
 
 						#label_1 = '{} ({:.0f}%)'.format(self.CLASSES[idx], confidence*100)
 						label_1 = '{}'.format(self.CLASSES[idx])
-						#label_2 = 'dist: {:.0f}ft'.format(object_dist)
-						label_3 = 'lane: {}'.format(lane)
+						label_2 = 'size: {:.2f}'.format(object_dist)
+						#label_3 = 'lane: {}'.format(lane)
 
-						vehicle_packet.append((confidence, self.CLASSES[idx], object_dist, lane))
+						vehicle_packet.append((confidence, self.CLASSES[idx], object_dist, lane, midpoint[0], midpoint[1]))
 
 						y = startY - 5 if startY - 5 > 5 else endY + 5
 
 						cv2.putText(vehicles_detected_slice, label_1, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255,255,255), 1)
-						#cv2.putText(vehicles_detected_slice, label_2, (startX, y+H+15), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255,255,255), 1)
-						cv2.putText(vehicles_detected_slice, label_3, (startX, y+H+15), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255,255,255), 1)
+						cv2.putText(vehicles_detected_slice, label_2, (startX, y+H+15), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255,255,255), 1)
+						#cv2.putText(vehicles_detected_slice, label_3, (startX, y+H+15), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255,255,255), 1)
 
 			#cv2.imshow('slice', np.maximum(frame_slice, vehicles_detected_slice))
 			vehicles_detected[math.ceil(h/2.5):h,:] = vehicles_detected_slice
@@ -222,8 +224,11 @@ class VPS(object):
 
 		if self.lanes:
 			rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-			detection_data = ld.vid_pipeline(rgb_frame, cache=self.lane_cache, roi=pipe_roi_detected, show=self.show_visuals)
-
+			try:
+				detection_data = ld.vid_pipeline(rgb_frame, cache=self.lane_cache, roi=pipe_roi_detected, show=self.show_visuals)
+			except Exception as ex:
+				print(ex)
+				detection_data = (frame, 0, 0, 0, 0, 'Not Detected', np.zeros_like(frame))
 			processed_frame = np.maximum(detection_data[0],vehicles_detected)
 			lane_curve = detection_data[1]
 			left_curve = detection_data[2]
@@ -236,8 +241,8 @@ class VPS(object):
 				print('\rLeft Curve: {:6.0f}\tRight Curve: {:6.0f}\tCenter Curve: {:6.0f}\tVehicle Offset: {:.4f}\t\tTurn: {}\t\t\t'.format(left_curve, right_curve, lane_curve, vehicle_offset, turn), end='')
 
 			processed_frame = cv2.cvtColor(processed_frame, cv2.COLOR_RGB2BGR)
-			draw_region_of_interest = [pipe_roi_detected[0], pipe_roi_detected[1], pipe_roi_detected[3], pipe_roi_detected[2]]
-			cv2.polylines(processed_frame, [np.array(np.float32(draw_region_of_interest)*np.float32(self.size), np.int32)], True, (255,0,0), 1)
+			#draw_region_of_interest = [pipe_roi_detected[0], pipe_roi_detected[1], pipe_roi_detected[3], pipe_roi_detected[2]]
+			#cv2.polylines(processed_frame, [np.array(np.float32(draw_region_of_interest)*np.float32(self.size), np.int32)], True, (255,0,0), 1)
 
 		if self.show_visuals and self.lanes:
 			processed_frame = np.concatenate((visuals, processed_frame), axis=1)
@@ -251,20 +256,23 @@ class VPS(object):
 
 
 if __name__ == "__main__":
-	cap = cv2.VideoCapture('project_video.mp4')
-	#cap = cv2.VideoCapture(cv2.CAP_DSHOW)
+	#cap = cv2.VideoCapture('tests/test_10/test_10_raw.mp4')
+
+	cap = cv2.VideoCapture(cv2.CAP_DSHOW)
 	cap.set(3, 1280)
 	cap.set(4, 720)
+	
 
-	vps = VPS(show_visuals=False, readout=False, record_processed=False, return_data=True)
+	vps = VPS(show_visuals=False, invert=True, record_processed=False, position_camera=True, record_file='test_10', readout=False, return_data=True)
 
 	while True:
 		ret, frame = cap.read()
+
 		if not ret:
 			break
 		lane_data, vehicle_data, frame = vps.road_vision(frame)
-		print(lane_data)
-		print(vehicle_data)
+		#print(lane_data)
+		#print(vehicle_data)
 
 		cv2.imshow('VPS', frame)
 		if cv2.waitKey(1) & 0xFF == ord('q'):

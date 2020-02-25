@@ -8,7 +8,6 @@ import glob
 import warnings 
 warnings.simplefilter('ignore', np.RankWarning)
 
-
 def calibrate(size=(1280,720)):
     # Prepare object points 0,0,0 ... 8,5,0
     obj_pts = np.zeros((6*9,3), np.float32)
@@ -359,18 +358,18 @@ def draw_lanes(img, left_fit, right_fit, roi):
     center = np.mean([left,right],axis=0, dtype=np.int)
     points = np.vstack((left, np.flip(right, 0)))
     
-    cv2.fillPoly(color_img, [points], (0,255,0))
-    cv2.polylines(color_img, [left], False, (255,0,0), 10)
-    cv2.polylines(color_img, [right], False, (255,0,0), 10)
-    cv2.polylines(color_img, [center], False, (0,0,255), 10)
+    #cv2.fillPoly(color_img, [points], (0,255,0))
+    cv2.polylines(color_img, [left], False, (255,255,255), 10)
+    cv2.polylines(color_img, [right], False, (255,255,255), 10)
+    cv2.polylines(color_img, [center], False, (0,255,0), 40)
     inv_perspective = inv_perspective_warp(color_img, roi=roi)
 
     return inv_perspective
 
 def vid_pipeline(img, cache, roi, show=True):
-    font = cv2.FONT_HERSHEY_SIMPLEX
+    font = cv2.FONT_HERSHEY_PLAIN
     fontColor = (0, 0, 0)
-    fontSize=0.6
+    fontSize=1.3
     thickness = 2
     size = (img.shape[1],img.shape[0])
 
@@ -395,55 +394,100 @@ def vid_pipeline(img, cache, roi, show=True):
         #print(center_angle)
 
         curverad = get_curve(img_slice, curves[0], curves[1])   # Calculate the curve radius of each lane line
-        '''
-        if not cache.empty():
-            curverad_mean = cache.mean(3)   # Take mean of the cached lane curves
-            # Adjust lane curves to equal mean of cache and current lane curves (this will reduce large variance between frames)
-            curverad = np.mean(np.stack([curverad_mean, curverad]),axis=0)
 
-            angle_mean = cache.mean(6)
-            center_angle = np.mean(np.stack([angle_mean, center_angle]), axis=0)
-        '''
         lane_curve = np.mean([curverad[0], curverad[1]])    # Calculate the average radius
 
-        center = np.mean([curves[0], curves[1]], axis=0)
+        #COMMENT OUT IF USING MEDIAN
+        #///////////////////////////////
+
+        mean_curverad = curverad
+        mean_lane_curve = lane_curve
+        mean_center_angle = center_angle
+
+        median_curverad = curverad
+        median_lane_curve = lane_curve
+        median_center_angle = center_angle
+
+        #last_lane_curve = lane_curve
+        last_center_angle = center_angle
+        
+        if not cache.empty():
+            _, _, _, _, last_lane_curve, last_center_angle, _, _, _, _, _, _, _ = cache.get_last()
+
+            mean_curverad = cache.mean(3)
+            mean_curverad = np.mean(np.stack([mean_curverad, curverad]), axis=0)
+
+            mean_lane_curve = cache.mean(4)
+            mean_lane_curve = np.mean(np.stack([mean_lane_curve, lane_curve]), axis=0)
+
+            mean_center_angle = cache.mean(5)
+            mean_center_angle = np.mean(np.stack([mean_center_angle, center_angle]), axis=0)
+            
+            median_curverad = cache.median(3)
+            median_curverad = np.median(np.stack([median_curverad, curverad]), axis=0)
+
+            median_lane_curve = cache.median(4)
+            median_lane_curve = np.median(np.stack([median_lane_curve, lane_curve]), axis=0)
+
+            median_center_angle = cache.median(5)
+            median_center_angle = np.median(np.stack([median_center_angle, center_angle]), axis=0)
+            
+        #///////////////////////////////
 
         turn = 'straight'
 
-        if center_angle < 90.0:
+        #print(mean_center_angle)
+
+        if mean_center_angle < 90.0:
             turn = 'left'
-        elif center_angle > 110.0:
+        elif mean_center_angle > 110.0:
             turn = 'right'
 
-        vehicle_offset =  curverad[2]   # Get the vehicle offset
+        mean_vehicle_offset =  mean_curverad[2]   # Get the vehicle offset
+
+        median_vehicle_offset = median_curverad[2]
 
         # Get the lane polygon
         lanes = draw_lanes(img_slice, curves[0], curves[1], roi=[roi[0][0], roi[1][0], roi[2][0], roi[3][0]])
+        #print(abs(last_center_angle - mean_center_angle))
+        if abs(last_center_angle - mean_center_angle) > 15:
+            mean_curverad = cache.mean(3)
+            mean_lane_curve = cache.mean(4)
+            mean_center_angle = cache.mean(5)
 
-        cache.add([roi, sliding, curves, curverad, lane_curve, center, center_angle, turn, vehicle_offset, lanes])
+        if abs(last_center_angle - median_center_angle) > 15:
+            median_curverad = cache.median(3)
+            median_lane_curve = cache.median(4)
+            median_center_angle = cache.median(5)
 
-        median_index = cache.median_index(3)
-        
-        roi, sliding, curves, curverad, lane_curve, center, center_angle, turn, vehicle_offset, lanes = cache.get_index(median_index)
+        cache.add([roi, sliding, curves, mean_curverad, mean_lane_curve, mean_center_angle, mean_vehicle_offset, median_curverad, median_lane_curve, median_center_angle, median_vehicle_offset, turn, lanes])
 
-    except:
-        roi, sliding, curves, curverad, lane_curve, center, center_angle, turn, vehicle_offset, lanes = cache.get_last()
+        median_index = cache.median_index(5)
+        _, _, _, _, _, _, _, _, _, _, _, _, lanes = cache.get_index(median_index)
+    except Exception as ex:
+        roi, sliding, curves, mean_curverad, mean_lane_curve, mean_center_angle, mean_vehicle_offset, median_curverad, median_lane_curve, median_center_angle, median_vehicle_offset, turn, lanes = cache.get_last()
 
     # Add the lane polygon to the output image
     img_slice = img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :]
-    img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] = cv2.addWeighted(img_slice, 1, lanes, 0.5, 0)
+    img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] = cv2.addWeighted(img_slice, 1, lanes, 0.6, 0)
     
-    cv2.putText(img, 'Left Curve: {:.0f} m'.format(curverad[0]), (10, 30), font, fontSize, fontColor, thickness)
-    cv2.putText(img, 'Right Curve: {:.0f} m'.format(curverad[1]), (10, 50), font, fontSize, fontColor, thickness)
-    cv2.putText(img, 'Center Curve: {:.0f} m'.format(lane_curve), (10, 70), font, fontSize, fontColor, thickness)
-    cv2.putText(img, 'Vehicle Offset: {:.4f} m'.format(vehicle_offset), (10, 90), font, fontSize, fontColor, thickness)
-    cv2.putText(img, 'Turn: {}'.format(turn), (10, 110), font, fontSize, fontColor, thickness)
+    cv2.putText(img, 'Mean LC: {:.0f} m'.format(mean_curverad[0]), (10, 30), font, fontSize, fontColor, thickness)
+    cv2.putText(img, 'Mean RC: {:.0f} m'.format(mean_curverad[1]), (10, 50), font, fontSize, fontColor, thickness)
+    cv2.putText(img, 'Mean CC: {:.0f} m'.format(mean_lane_curve), (10, 70), font, fontSize, fontColor, thickness)
+    cv2.putText(img, 'Mean VO: {:.4f} m'.format(mean_vehicle_offset), (10, 90), font, fontSize, fontColor, thickness)
+    
+    cv2.putText(img, 'Median LC: {:.0f} m'.format(median_curverad[0]), (10, 110), font, fontSize, fontColor, thickness)
+    cv2.putText(img, 'Median RC: {:.0f} m'.format(median_curverad[1]), (10, 130), font, fontSize, fontColor, thickness)
+    cv2.putText(img, 'Median CC: {:.0f} m'.format(median_lane_curve), (10, 150), font, fontSize, fontColor, thickness)
+    cv2.putText(img, 'Median VO: {:.4f} m'.format(median_vehicle_offset), (10, 170), font, fontSize, fontColor, thickness)
+    
+    cv2.putText(img, 'Turn: {}'.format(turn), (10, 190), font, fontSize, fontColor, thickness)
 
 
     # Assemble the visual frame if requested
     visual_frame = None
     if show:
-        visual_frame = np.concatenate((cv2.cvtColor((thresh*255),cv2.COLOR_GRAY2BGR),sliding,cv2.cvtColor(lanes, cv2.COLOR_RGB2BGR)), axis=0)
+        visual_frame = np.concatenate((perspect,sliding,cv2.cvtColor(lanes, cv2.COLOR_RGB2BGR)), axis=0)
 
         line_y = thresh.shape[0]
         cv2.line(visual_frame, (0,line_y), (visual_frame.shape[1],line_y), (255,255,255), 2)
@@ -456,5 +500,5 @@ def vid_pipeline(img, cache, roi, show=True):
 
         visual_frame = cv2.resize(visual_frame, (img.shape[1], img.shape[0]),  interpolation = cv2.INTER_AREA)  
 
-    return (img, lane_curve, curverad[0], curverad[1], vehicle_offset, turn, visual_frame)
+    return (img, mean_lane_curve, mean_curverad[0], mean_curverad[1], mean_vehicle_offset, turn, visual_frame)
 

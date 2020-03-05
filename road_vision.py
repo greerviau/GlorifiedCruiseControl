@@ -20,6 +20,7 @@ class VPS(object):
 	record_raw = False,
 	record_processed = False,
 	show_visuals = True,
+	show_data = True,
 	calib = False, 
 	invert = False, 
 	lanes = True, 
@@ -35,6 +36,7 @@ class VPS(object):
 		self.record_raw = record_raw
 		self.record_processed = record_processed
 		self.show_visuals = show_visuals
+		self.show_data = show_data
 		self.invert = invert
 		self.lanes = lanes
 		self.objects = objects
@@ -195,16 +197,18 @@ class VPS(object):
 						else:
 							lane = 'left'
 						
+						vehicle_packet.append((confidence, self.CLASSES[idx], object_dist, lane, midpoint[0], midpoint[1]))
+
 						#cv2.rectangle(vehicles_detected_slice, midpoint, midpoint, color, 5)
 						cv2.rectangle(vehicles_detected_slice, (startX, startY), (endX, endY), color, 2)
 						cv2.rectangle(vehicles_detected_slice, (startX, startY), (endX, endY), [int(c * 0.2) for c in color], -1)
-
+						
+						
 						#label_1 = '{} ({:.0f}%)'.format(self.CLASSES[idx], confidence*100)
 						label_1 = '{}'.format(self.CLASSES[idx])
 						label_2 = 'size: {:.2f}'.format(object_dist)
 						#label_3 = 'lane: {}'.format(lane)
 
-						vehicle_packet.append((confidence, self.CLASSES[idx], object_dist, lane, midpoint[0], midpoint[1]))
 
 						y = startY - 5 if startY - 5 > 5 else endY + 5
 
@@ -225,7 +229,7 @@ class VPS(object):
 		if self.lanes:
 			rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 			try:
-				detection_data = ld.vid_pipeline(rgb_frame, cache=self.lane_cache, roi=pipe_roi_detected, show=self.show_visuals)
+				detection_data = ld.vid_pipeline(rgb_frame, cache=self.lane_cache, roi=pipe_roi_detected, write=self.show_data, show=self.show_visuals)
 			except Exception as ex:
 				print(ex)
 				detection_data = (frame, 0, 0, 0, 0, 'Not Detected', np.zeros_like(frame))
@@ -236,9 +240,9 @@ class VPS(object):
 			vehicle_offset = detection_data[4]
 			turn = detection_data[5]
 			visuals = detection_data[6]
-
+			
 			if self.readout:
-				print('\rLeft Curve: {:6.0f}\tRight Curve: {:6.0f}\tCenter Curve: {:6.0f}\tVehicle Offset: {:.4f}\t\tTurn: {}\t\t\t'.format(left_curve, right_curve, lane_curve, vehicle_offset, turn), end='')
+				print('Left Curve: {:6.0f}\tRight Curve: {:6.0f}\tCenter Curve: {:6.0f}\tVehicle Offset: {:.4f}\t\tTurn: {}\t\t\t'.format(left_curve, right_curve, lane_curve, vehicle_offset, turn), end='\r')
 
 			processed_frame = cv2.cvtColor(processed_frame, cv2.COLOR_RGB2BGR)
 			#draw_region_of_interest = [pipe_roi_detected[0], pipe_roi_detected[1], pipe_roi_detected[3], pipe_roi_detected[2]]
@@ -256,14 +260,14 @@ class VPS(object):
 
 
 if __name__ == "__main__":
-	#cap = cv2.VideoCapture('tests/test_10/test_10_raw.mp4')
-
+	cap = cv2.VideoCapture('tests/test_10/test_10_raw.mp4')
+	'''
 	cap = cv2.VideoCapture(cv2.CAP_DSHOW)
 	cap.set(3, 1280)
 	cap.set(4, 720)
-	
+	'''
 
-	vps = VPS(show_visuals=False, invert=True, record_processed=False, position_camera=True, record_file='test_10', readout=False, return_data=True)
+	vps = VPS(show_visuals=False, show_data = False, invert=False, record_processed=True, position_camera=False, record_file='test_10', readout=False, return_data=True)
 
 	while True:
 		ret, frame = cap.read()

@@ -366,7 +366,7 @@ def draw_lanes(img, left_fit, right_fit, roi):
 
     return inv_perspective
 
-def vid_pipeline(img, cache, roi, show=True):
+def vid_pipeline(img, cache, roi, write=True, show=True):
     font = cv2.FONT_HERSHEY_PLAIN
     fontColor = (0, 0, 0)
     fontSize=1.3
@@ -461,27 +461,30 @@ def vid_pipeline(img, cache, roi, show=True):
             median_center_angle = cache.median(5)
 
         cache.add([roi, sliding, curves, mean_curverad, mean_lane_curve, mean_center_angle, mean_vehicle_offset, median_curverad, median_lane_curve, median_center_angle, median_vehicle_offset, turn, lanes])
-
-        median_index = cache.median_index(5)
-        _, _, _, _, _, _, _, _, _, _, _, _, lanes = cache.get_index(median_index)
+        '''
+        median_idx = cache.median_index(5)
+        lanes = cache.get_at_index(median_idx, cache.get_element_size()-1)
+        roi = cache.get_at_index(median_idx, 0)'''
     except Exception as ex:
         roi, sliding, curves, mean_curverad, mean_lane_curve, mean_center_angle, mean_vehicle_offset, median_curverad, median_lane_curve, median_center_angle, median_vehicle_offset, turn, lanes = cache.get_last()
 
     # Add the lane polygon to the output image
     img_slice = img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :]
+    #print(lanes.shape, img_slice.shape)
     img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] = cv2.addWeighted(img_slice, 1, lanes, 0.6, 0)
     
-    cv2.putText(img, 'Mean LC: {:.0f} m'.format(mean_curverad[0]), (10, 30), font, fontSize, fontColor, thickness)
-    cv2.putText(img, 'Mean RC: {:.0f} m'.format(mean_curverad[1]), (10, 50), font, fontSize, fontColor, thickness)
-    cv2.putText(img, 'Mean CC: {:.0f} m'.format(mean_lane_curve), (10, 70), font, fontSize, fontColor, thickness)
-    cv2.putText(img, 'Mean VO: {:.4f} m'.format(mean_vehicle_offset), (10, 90), font, fontSize, fontColor, thickness)
-    
-    cv2.putText(img, 'Median LC: {:.0f} m'.format(median_curverad[0]), (10, 110), font, fontSize, fontColor, thickness)
-    cv2.putText(img, 'Median RC: {:.0f} m'.format(median_curverad[1]), (10, 130), font, fontSize, fontColor, thickness)
-    cv2.putText(img, 'Median CC: {:.0f} m'.format(median_lane_curve), (10, 150), font, fontSize, fontColor, thickness)
-    cv2.putText(img, 'Median VO: {:.4f} m'.format(median_vehicle_offset), (10, 170), font, fontSize, fontColor, thickness)
-    
-    cv2.putText(img, 'Turn: {}'.format(turn), (10, 190), font, fontSize, fontColor, thickness)
+    if write:
+        cv2.putText(img, 'Mean LC: {:.0f} m'.format(mean_curverad[0]), (10, 30), font, fontSize, fontColor, thickness)
+        cv2.putText(img, 'Mean RC: {:.0f} m'.format(mean_curverad[1]), (10, 50), font, fontSize, fontColor, thickness)
+        cv2.putText(img, 'Mean CC: {:.0f} m'.format(mean_lane_curve), (10, 70), font, fontSize, fontColor, thickness)
+        cv2.putText(img, 'Mean VO: {:.4f} m'.format(mean_vehicle_offset), (10, 90), font, fontSize, fontColor, thickness)
+        
+        cv2.putText(img, 'Median LC: {:.0f} m'.format(median_curverad[0]), (10, 110), font, fontSize, fontColor, thickness)
+        cv2.putText(img, 'Median RC: {:.0f} m'.format(median_curverad[1]), (10, 130), font, fontSize, fontColor, thickness)
+        cv2.putText(img, 'Median CC: {:.0f} m'.format(median_lane_curve), (10, 150), font, fontSize, fontColor, thickness)
+        cv2.putText(img, 'Median VO: {:.4f} m'.format(median_vehicle_offset), (10, 170), font, fontSize, fontColor, thickness)
+        
+        cv2.putText(img, 'Turn: {}'.format(turn), (10, 190), font, fontSize, fontColor, thickness)
 
 
     # Assemble the visual frame if requested

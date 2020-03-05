@@ -32,6 +32,9 @@ class Cache():
     def get_size(self):
         return self.size
 
+    def get_element_size(self):
+        return len(self.cache[0])
+
     def get_last(self):
         return self.cache[self.size-1]
 
@@ -41,11 +44,11 @@ class Cache():
     def get_all_index(self, i):
         return [row[i] for row in self.cache]
 
-    def get_at_index(self, i, j):
-        return [row[i] for row in self.cache][j]
-
     def get_index(self, i):
         return self.cache[i]
+        
+    def get_at_index(self, i, j):
+        return self.cache[i][j]
 
     def print_cache(self):
         for e in self.cache:

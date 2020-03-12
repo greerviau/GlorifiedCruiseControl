@@ -3,7 +3,7 @@ import cv2
 import itertools
 import math
 
-def invert_frame(self, frame):
+def invert_frame(frame):
     (H,W) = frame.shape[:2]
     center = (W/2, H/2)
     M = cv2.getRotationMatrix2D(center, 180, 1.0)

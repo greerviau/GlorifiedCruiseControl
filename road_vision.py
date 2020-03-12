@@ -260,12 +260,12 @@ class VPS(object):
 
 
 if __name__ == "__main__":
-	cap = cv2.VideoCapture('tests/test_10/test_10_raw.mp4')
-	'''
-	cap = cv2.VideoCapture(cv2.CAP_DSHOW)
+	#cap = cv2.VideoCapture('tests/test_10/test_10_raw.mp4')
+	
+	cap = cv2.VideoCapture('/dev/video2')
 	cap.set(3, 1280)
 	cap.set(4, 720)
-	'''
+	
 
 	vps = VPS(show_visuals=False, show_data = False, invert=False, record_processed=True, position_camera=False, record_file='test_10', readout=False, return_data=True)
 
@@ -273,6 +273,7 @@ if __name__ == "__main__":
 		ret, frame = cap.read()
 
 		if not ret:
+			print('Frame Not Detected')
 			break
 		lane_data, vehicle_data, frame = vps.road_vision(frame)
 		#print(lane_data)

@@ -29,6 +29,8 @@ An opencv system that detects lane lines and vehicles.
 
 ### Lane Detection
 The lane detection uses a combination of perspective transformation, color thresholding, sliding window detection and polynomial function fitting to detect the lane lines and calculate the curvature and direction of the lane.
+#### SCNN Lanenet
+Download the lanenet models and data [here](https://drive.google.com/open?id=1Z2HSItBayCRa3pg1CEn0S_xn8LLLwIGD)
 
 ### Vehicle Detection
 A pretrained implementation of Google MobileNetSSD Network that detects vehicles from the video feed. Metrics about each vehicle are calculated such as lane position (left, right, mine) and distance to the vehicle.

@@ -3,6 +3,7 @@ import pandas as pd
 import cv2
 import os
 import sys
+import time
 
 def clipper(d_dir):
     path = os.path.join(data_dir,d_dir,d_dir)
@@ -22,6 +23,7 @@ def clipper(d_dir):
         c += 1
         
         cv2.imshow('Clipper', frame)
+        time.sleep(0.01)
 
         if c % 1 == 0:
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -30,6 +32,12 @@ def clipper(d_dir):
 
     split_at.append(c)
     video.release()
+
+    return (d_dir, split_at)
+
+def process_clips(clip_data):
+    d_dir = clip_data[0]
+    split_at = clip_data[1]
 
     processed_path = os.path.join(processed_data_dir, d_dir)
 
@@ -57,23 +65,31 @@ def clipper(d_dir):
                 data.iloc[split_at[split-1]:split_at[split],:].to_csv(split_dir+'/split_'+str(split)+'.csv')
                 break
 
-data_dir = 'data'
-
-resolution = (640, 360)
-
-processed_data_dir = 'data_processed'
-
-if not os.path.exists(processed_data_dir):
-    os.makedirs(processed_data_dir)
-
-data_folders = os.listdir(data_dir)
-
 if __name__ == '__main__':
-    clipper(sys.argv[1])
-else:
-    for folder in data_folders:
-        clipper(folder)
-    
+
+    data_dir = 'data'
+
+    resolution = (640, 360)
+
+    processed_data_dir = 'data_processed'
+
+    if not os.path.exists(processed_data_dir):
+        os.makedirs(processed_data_dir)
+
+    data_folders = os.listdir(data_dir)
+
+    if(len(sys.argv) > 1):
+        split_info = clipper(sys.argv[1])
+        process_clips(split_info)
+    else:
+        split_info = []
+        for i, folder in enumerate(data_folders, 0):
+            print('Clip {}/{}'.format(i+1, len(data_folders)))
+            split_info.append(clipper(folder))
+
+        for split_i in split_info:
+            process_clips((split_i))
+        
             
     
     

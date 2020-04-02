@@ -8,6 +8,11 @@ import glob
 import warnings 
 warnings.simplefilter('ignore', np.RankWarning)
 
+
+import SCNN_lanenet.test_lanenet_raw as ln
+
+lanenet = ln.Lanenet('SCNN_lanenet/model_culane-71-3/culane_lanenet_vgg_2018-12-01-14-38-37.ckpt-10000', True)
+
 def calibrate(size=(1280,720)):
     # Prepare object points 0,0,0 ... 8,5,0
     obj_pts = np.zeros((6*9,3), np.float32)
@@ -375,14 +380,40 @@ def vid_pipeline(img, cache, roi, write=True, show=True):
 
     #img = undistort(img)
 
+    #cv2.imwrite('current_frame.png', cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    find_lanes = lanenet.run_lanenet(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    scale_factor = 255 / find_lanes.max()
+    find_lanes = find_lanes * scale_factor
+    find_lanes = np.array(find_lanes, dtype=np.uint8)
+    find_lanes = cv2.resize(find_lanes, size)
+    #cv2.imshow('find', find_lanes)
+    #cv2.imshow('lanes', np.maximum(img, find_lanes))
+    #print(type(find_lanes))
+    #print(find_lanes.shape)
+    #print(size)
+    lanes_slice = find_lanes[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] # Create the ROI slice of the frame
+    #cv2.imshow('slice', lanes_slice)
+    lanenet_perspect = perspective_warp(lanes_slice, roi=[roi[0][0], roi[1][0], roi[2][0], roi[3][0]]) # Warp the ROI to birdseye view
+    #cv2.imshow('persp', perspect)    
+    lanes_thresh = np.maximum(np.maximum(lanenet_perspect[:,:,0], lanenet_perspect[:,:,1]), lanenet_perspect[:,:,2])
+    #cv2.imshow('gray', lanes_thresh)
+    lanenet_thresh = np.zeros_like(lanes_thresh)
+    lanenet_thresh[lanes_thresh > 170] = 1
+    #cv2.imshow('thresh', thresh*255)
+    #cv2.waitKey(0)
+    
     img_slice = img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] # Create the ROI slice of the frame
     
     #pipe = hls_compute_binary(img_slice)  # Run initial video pipeline
     
-    perspect = perspective_warp(img_slice, roi=[roi[0][0], roi[1][0], roi[2][0], roi[3][0]]) # Warp the ROI to birdseye view
+    color_perspect = perspective_warp(img_slice, roi=[roi[0][0], roi[1][0], roi[2][0], roi[3][0]]) # Warp the ROI to birdseye view
 
-    thresh = color_grad_thresh(perspect)
+    color_thresh = color_grad_thresh(color_perspect)
 
+    thresh = np.zeros_like(color_thresh)
+    thresh[(color_thresh == 1) | (lanenet_thresh == 1)] = 1
+    
+    #thresh = lanenet_thresh
     # Run sliding windows to get the curve of each lane marker
     try:    
         sliding, curves, _, _ = sliding_window(thresh, margin=100, nwindows=4, draw_windows=True)
@@ -469,7 +500,7 @@ def vid_pipeline(img, cache, roi, write=True, show=True):
         roi, sliding, curves, mean_curverad, mean_lane_curve, mean_center_angle, mean_vehicle_offset, median_curverad, median_lane_curve, median_center_angle, median_vehicle_offset, turn, lanes = cache.get_last()
 
     # Add the lane polygon to the output image
-    img_slice = img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :]
+    img_slice = np.copy(img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :])
     #print(lanes.shape, img_slice.shape)
     img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] = cv2.addWeighted(img_slice, 1, lanes, 0.6, 0)
     
@@ -490,7 +521,7 @@ def vid_pipeline(img, cache, roi, write=True, show=True):
     # Assemble the visual frame if requested
     visual_frame = None
     if show:
-        visual_frame = np.concatenate((perspect,sliding,cv2.cvtColor(lanes, cv2.COLOR_RGB2BGR)), axis=0)
+        visual_frame = np.concatenate((cv2.addWeighted(img_slice, 1, lanes_slice, 1, 0),sliding,cv2.cvtColor(lanes, cv2.COLOR_RGB2BGR)), axis=0)
 
         line_y = thresh.shape[0]
         cv2.line(visual_frame, (0,line_y), (visual_frame.shape[1],line_y), (255,255,255), 2)

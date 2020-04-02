@@ -30,7 +30,7 @@ class VPS(object):
 	readout = True,
 	cache_size = 5,
 	size = (640,360), 
-	region_of_interest = [[0.43,0.63],[0.57,0.63],[.95,.95],[.05,.95]]):
+	region_of_interest = [[0.48,0.70],[0.62,0.70],[.85,.95],[.15,.95]]):
 
 		self.CONF = CONF
 		self.record_raw = record_raw
@@ -91,10 +91,10 @@ class VPS(object):
 
 		if position_camera:
 
-			cap = cv2.VideoCapture(cv2.CAP_DSHOW)
-			cap.set(3, 1280)
-			cap.set(4, 720)
-			while(True):
+			cap = cv2.VideoCapture('D:/data/sess_08/sess_08.mp4')
+			#cap.set(3, 1280)
+			#cap.set(4, 720)
+			while True:
 				# ret = True/False if there is a next frame
 				# frame = numpy pixel array
 				ret, frame = cap.read()
@@ -126,7 +126,7 @@ class VPS(object):
 		# frame = numpy pixel array
 
 		if self.invert:
-			frame = sinvert_frame(frame)
+			frame = invert_frame(frame)
 
 		if self.record_raw:
 			self.out_raw.write(cv2.resize(frame, (1280, 720), interpolation = cv2.INTER_AREA))
@@ -260,14 +260,14 @@ class VPS(object):
 
 
 if __name__ == "__main__":
-	#cap = cv2.VideoCapture('tests/test_10/test_10_raw.mp4')
+	cap = cv2.VideoCapture('D:/data/sess_06/sess_06.mp4')
 	
-	cap = cv2.VideoCapture('/dev/video2')
+	#cap = cv2.VideoCapture('/dev/video2')
 	cap.set(3, 1280)
 	cap.set(4, 720)
 	
 
-	vps = VPS(show_visuals=False, show_data = False, invert=False, record_processed=True, position_camera=False, record_file='test_10', readout=False, return_data=True)
+	vps = VPS(show_visuals=True, show_data = True, objects=False, invert=False, record_processed=True, position_camera=False, record_file='test_10', readout=False, return_data=True)
 
 	while True:
 		ret, frame = cap.read()

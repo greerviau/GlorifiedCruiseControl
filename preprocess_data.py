@@ -1,96 +1,97 @@
-import numpy as np
-import pandas as pd
-import cv2
-import os
+import numpy as np 
+import pandas as pd 
+from road_vision import VPS
 import sys
-import time
+import csv
+import os
+import cv2
 
-def clipper(d_dir):
-    path = os.path.join(data_dir,d_dir,d_dir)
-    print(path+'.mp4')
-    
-    video = cv2.VideoCapture(path+'.mp4')
-    
-    split_at = [0]
-    c = 0
-    while True:
+cols = ['mean_left_curve', 'mean_right_curve', 'mean_lane_curve', 'mean_vehicle_offset', 'mean_center_angle',
+        'median_left_curve', 'median_right_curve', 'median_lane_curve', 'median_vehicle_offset', 'median_center_angle' , 'turn', 
+        'v1_conf', 'v1_type', 'v1_size', 'v1_lane', 'v1_x', 'v1_y', 
+        'v2_conf', 'v2_type', 'v2_size', 'v2_lane', 'v2_x', 'v2_y', 
+        'v3_conf', 'v3_type', 'v3_size', 'v3_lane', 'v3_x', 'v3_y', 
+        'v4_conf', 'v4_type', 'v4_size', 'v4_lane', 'v4_x', 'v4_y', 
+        'v5_conf', 'v5_type', 'v5_size', 'v5_lane', 'v5_x', 'v5_y', 
+        'steering_angle', 'speed']
 
-        ret, frame = video.read()
+print('COLS: ', len(cols))
 
-        if not ret:
-            break
+processed_data_dir = 'data_processed'
 
-        c += 1
+if not os.path.exists(processed_data_dir):
+    os.makedirs(processed_data_dir)
+
+data_dir = 'data_cleaned'
+
+session_folders = os.listdir(data_dir)
+
+for session in session_folders:
+    split_dir = os.path.join(data_dir, session)
+    splits = os.listdir(split_dir)
+
+    session_data_dir = os.path.join(processed_data_dir, session+'_processed')
+
+    if not os.path.exists(session_data_dir):
+        os.makedirs(session_data_dir)
+
+    aggregate_data = pd.DataFrame(columns=cols)
+    #print(aggregate_data.head())
+
+    for split in splits:
+        road_video = cv2.VideoCapture(os.path.join(split_dir, split, split+'.mp4'))
+
+        csv_data = pd.read_csv(os.path.join(split_dir, split, split+'.csv'))
+
+        vps = VPS( show_data = True, objects=False, return_data=True)
         
-        cv2.imshow('Clipper', frame)
-        time.sleep(0.01)
+        frame_count = 0
+        
+        rows = []
 
-        if c % 1 == 0:
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                print('Key Frame: ',c)
-                split_at.append(c)
+        skip = 0
+        if split == 'split_1':
+            skip = 100
 
-    split_at.append(c)
-    video.release()
-
-    return (d_dir, split_at)
-
-def process_clips(clip_data):
-    d_dir = clip_data[0]
-    split_at = clip_data[1]
-
-    processed_path = os.path.join(processed_data_dir, d_dir)
-
-    video = cv2.VideoCapture(path+'.mp4')
-    data = pd.read_csv(path+'.csv')
-    c = 0
-
-    for split in range(1,len(split_at)):
-        split_dir = os.path.join(processed_path, 'split_'+str(split))
-        if not os.path.exists(split_dir):
-            os.makedirs(split_dir)
-        out_video = cv2.VideoWriter(split_dir+'/split_'+str(split)+'.mp4',cv2.VideoWriter_fourcc(*'XVID'), 30, resolution)
         while True:
-            ret, frame = video.read()
+            ret, frame = road_video.read()
+
             if not ret:
                 break
 
-            out_video.write(frame)
+            if frame_count >= skip:
+                lane_data, vehicle_data, frame = vps.road_vision(frame)
 
-            c+= 1
+                #LANE DATA FORMAT (mean_left_curve, mean_right_curve, mean_lane_curve, mean_vehicle_offset, mean_center_angle, median_left_curve, median_right_curve, median_lane_curve, median_vehicle_offset, median_center_angle, turn)
 
-            if c == split_at[split]:
-                out_video.release()
-                print(split_at[split-1],split_at[split])
-                data.iloc[split_at[split-1]:split_at[split],:].to_csv(split_dir+'/split_'+str(split)+'.csv')
-                break
+                obd_data = csv_data.iloc[frame_count,:].to_list()
 
-if __name__ == '__main__':
+                sas_angle = obd_data[1]
 
-    data_dir = 'data'
+                speed = obd_data[4]
 
-    resolution = (640, 360)
+                row = []
 
-    processed_data_dir = 'data_processed'
+                row.extend(list(lane_data))
 
-    if not os.path.exists(processed_data_dir):
-        os.makedirs(processed_data_dir)
+                for vehicle in vehicle_data:
+                    row.extend(list(vehicle))
 
-    data_folders = os.listdir(data_dir)
+                row.append(sas_angle)
+                row.append(speed)
+                
+                rows.append(row)
 
-    if(len(sys.argv) > 1):
-        split_info = clipper(sys.argv[1])
-        process_clips(split_info)
-    else:
-        split_info = []
-        for i, folder in enumerate(data_folders, 0):
-            print('Clip {}/{}'.format(i+1, len(data_folders)))
-            split_info.append(clipper(folder))
+                cv2.imshow('VPS', frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+            frame_count += 1
 
-        for split_i in split_info:
-            process_clips((split_i))
-        
-            
+        split_data = pd.DataFrame(rows, columns=cols)
+
+        aggregate_data = aggregate_data.append(split_data, ignore_index=True)
+        print(aggregate_data.head())
+        road_video.release()
+        cv2.destroyAllWindows()
     
-    
-        
+    aggregate_data.to_csv(os.path.join(session_data_dir, session+'.csv'))

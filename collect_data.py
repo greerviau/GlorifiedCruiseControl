@@ -1,4 +1,3 @@
-from read_data import OBDConnection
 from road_vision import VPS
 import sys, csv
 import cv2

@@ -372,22 +372,23 @@ def draw_lanes(img, left_fit, right_fit, roi):
     return inv_perspective
 
 def vid_pipeline(img, cache, roi, write=True, show=True):
+    image = np.copy(img)
     font = cv2.FONT_HERSHEY_PLAIN
     fontColor = (0, 0, 0)
-    fontSize=1.3
+    fontSize=1.7
     thickness = 2
-    size = (img.shape[1],img.shape[0])
+    size = (image.shape[1],image.shape[0])
 
-    #img = undistort(img)
+    #image = undistort(image)
 
-    #cv2.imwrite('current_frame.png', cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    find_lanes = lanenet.run_lanenet(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    #cv2.imwrite('current_frame.png', cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    find_lanes = lanenet.run_lanenet(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
     scale_factor = 255 / find_lanes.max()
     find_lanes = find_lanes * scale_factor
     find_lanes = np.array(find_lanes, dtype=np.uint8)
     find_lanes = cv2.resize(find_lanes, size)
     #cv2.imshow('find', find_lanes)
-    #cv2.imshow('lanes', np.maximum(img, find_lanes))
+    #cv2.imshow('lanes', np.maximum(image, find_lanes))
     #print(type(find_lanes))
     #print(find_lanes.shape)
     #print(size)
@@ -395,14 +396,21 @@ def vid_pipeline(img, cache, roi, write=True, show=True):
     #cv2.imshow('slice', lanes_slice)
     lanenet_perspect = perspective_warp(lanes_slice, roi=[roi[0][0], roi[1][0], roi[2][0], roi[3][0]]) # Warp the ROI to birdseye view
     #cv2.imshow('persp', perspect)    
-    lanes_thresh = np.maximum(np.maximum(lanenet_perspect[:,:,0], lanenet_perspect[:,:,1]), lanenet_perspect[:,:,2])
+    lanenet_red = lanenet_perspect[:,:,2].copy()
+    lanenet_green = lanenet_perspect[:,:,1]
+    #lanes_thresh = np.maximum(lanenet_perspect[:,:,2], lanenet_perspect[:,:,1])
     #cv2.imshow('gray', lanes_thresh)
-    lanenet_thresh = np.zeros_like(lanes_thresh)
-    lanenet_thresh[lanes_thresh > 170] = 1
+    lanenet_red_thresh = np.zeros_like(lanenet_red)
+    lanenet_red_thresh[lanenet_red > np.max(lanenet_red)/1.5] = 1
+
+    lanenet_green_thresh = np.zeros_like(lanenet_green)
+    lanenet_green_thresh[lanenet_green > np.max(lanenet_green)/1.5] = 1
+
+    lanenet_thresh = (lanenet_green_thresh + lanenet_red_thresh).copy()
     #cv2.imshow('thresh', thresh*255)
     #cv2.waitKey(0)
     
-    img_slice = img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] # Create the ROI slice of the frame
+    img_slice = image[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] # Create the ROI slice of the frame
     
     #pipe = hls_compute_binary(img_slice)  # Run initial video pipeline
     
@@ -426,16 +434,27 @@ def vid_pipeline(img, cache, roi, write=True, show=True):
 
         curverad = get_curve(img_slice, curves[0], curves[1])   # Calculate the curve radius of each lane line
 
-        lane_curve = np.mean([curverad[0], curverad[1]])    # Calculate the average radius
+        left_curve = curverad[0]
+        right_curve = curverad[1]
+        vehicle_offset = curverad[2]
+
+        if left_curve  > 5000 or right_curve > 5000:
+            raise Exception
+
+        lane_curve = np.mean([left_curve, right_curve])    # Calculate the average radius
 
         #COMMENT OUT IF USING MEDIAN
         #///////////////////////////////
 
-        mean_curverad = curverad
+        mean_left_curve = left_curve
+        mean_right_curve = right_curve
+        mean_vehicle_offset = vehicle_offset
         mean_lane_curve = lane_curve
         mean_center_angle = center_angle
 
-        median_curverad = curverad
+        median_left_curve = left_curve
+        median_right_curve = right_curve
+        median_vehicle_offset = vehicle_offset
         median_lane_curve = lane_curve
         median_center_angle = center_angle
 
@@ -443,25 +462,41 @@ def vid_pipeline(img, cache, roi, write=True, show=True):
         last_center_angle = center_angle
         
         if not cache.empty():
-            _, _, _, _, last_lane_curve, last_center_angle, _, _, _, _, _, _, _ = cache.get_last()
+            _, _, _, _, _, _, last_lane_curve, last_center_angle, _, _, _, _, _, _, _ = cache.get_last()
+            #MEAN CALCULATIONS
+            mean_left_curve = cache.mean(3)
+            mean_left_curve = np.mean([mean_left_curve, left_curve])
 
-            mean_curverad = cache.mean(3)
-            mean_curverad = np.mean(np.stack([mean_curverad, curverad]), axis=0)
+            mean_right_curve = cache.mean(4)
+            mean_right_curve = np.mean([mean_right_curve, right_curve])
 
-            mean_lane_curve = cache.mean(4)
-            mean_lane_curve = np.mean(np.stack([mean_lane_curve, lane_curve]), axis=0)
+            mean_vehicle_offset = cache.mean(5)
+            mean_vehicle_offset = np.mean([mean_vehicle_offset, vehicle_offset])
 
-            mean_center_angle = cache.mean(5)
-            mean_center_angle = np.mean(np.stack([mean_center_angle, center_angle]), axis=0)
+            mean_lane_curve = cache.mean(6)
+            mean_lane_curve = np.mean([mean_lane_curve, lane_curve])
+
+            mean_center_angle = cache.mean(7)
+            mean_center_angle = np.mean([mean_center_angle, center_angle])
             
-            median_curverad = cache.median(3)
-            median_curverad = np.median(np.stack([median_curverad, curverad]), axis=0)
+            #MEDIAN CALCULATIONS
+            median_left_curve = cache.median(3)
+            median_left_curve = np.median([median_left_curve, left_curve])
 
-            median_lane_curve = cache.median(4)
-            median_lane_curve = np.median(np.stack([median_lane_curve, lane_curve]), axis=0)
+            median_right_curve = cache.median(4)
+            median_right_curve = np.median([median_right_curve, right_curve])
 
-            median_center_angle = cache.median(5)
-            median_center_angle = np.median(np.stack([median_center_angle, center_angle]), axis=0)
+            median_vehicle_offset = cache.median(5)
+            median_vehicle_offset = np.median([median_vehicle_offset, vehicle_offset])
+
+            median_lane_curve = cache.median(6)
+            median_lane_curve = np.median([median_lane_curve, lane_curve])
+
+            median_center_angle = cache.median(7)
+            median_center_angle = np.median([median_center_angle, center_angle])
+
+            curves = np.mean(np.stack([np.array(cache.mean(2)), np.array(curves)]),axis=0)
+            curves = list(curves)
             
         #///////////////////////////////
 
@@ -469,18 +504,15 @@ def vid_pipeline(img, cache, roi, write=True, show=True):
 
         #print(mean_center_angle)
 
-        if mean_center_angle < 90.0:
+        if mean_center_angle < 80.0:
             turn = 'left'
         elif mean_center_angle > 110.0:
             turn = 'right'
 
-        mean_vehicle_offset =  mean_curverad[2]   # Get the vehicle offset
-
-        median_vehicle_offset = median_curverad[2]
-
         # Get the lane polygon
         lanes = draw_lanes(img_slice, curves[0], curves[1], roi=[roi[0][0], roi[1][0], roi[2][0], roi[3][0]])
         #print(abs(last_center_angle - mean_center_angle))
+        '''
         if abs(last_center_angle - mean_center_angle) > 15:
             mean_curverad = cache.mean(3)
             mean_lane_curve = cache.mean(4)
@@ -490,38 +522,45 @@ def vid_pipeline(img, cache, roi, write=True, show=True):
             median_curverad = cache.median(3)
             median_lane_curve = cache.median(4)
             median_center_angle = cache.median(5)
-
-        cache.add([roi, sliding, curves, mean_curverad, mean_lane_curve, mean_center_angle, mean_vehicle_offset, median_curverad, median_lane_curve, median_center_angle, median_vehicle_offset, turn, lanes])
+        '''
+        cache.add([roi.copy(), np.copy(sliding), np.copy(curves), mean_left_curve, mean_right_curve, mean_vehicle_offset, mean_lane_curve, mean_center_angle, median_left_curve, median_right_curve, median_vehicle_offset, median_lane_curve, median_center_angle, turn, np.copy(lanes)])
         '''
         median_idx = cache.median_index(5)
         lanes = cache.get_at_index(median_idx, cache.get_element_size()-1)
         roi = cache.get_at_index(median_idx, 0)'''
     except Exception as ex:
-        roi, sliding, curves, mean_curverad, mean_lane_curve, mean_center_angle, mean_vehicle_offset, median_curverad, median_lane_curve, median_center_angle, median_vehicle_offset, turn, lanes = cache.get_last()
-
+        roi, sliding, curves, mean_left_curve, mean_right_curve, mean_vehicle_offset, mean_lane_curve, mean_center_angle, median_left_curve, median_right_curve, median_vehicle_offset, median_lane_curve, median_center_angle, turn, lanes = cache.get_last()
+        
     # Add the lane polygon to the output image
-    img_slice = np.copy(img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :])
+    img_slice = np.copy(image[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :])
     #print(lanes.shape, img_slice.shape)
-    img[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] = cv2.addWeighted(img_slice, 1, lanes, 0.6, 0)
+    image[math.floor(size[1]*roi[0][1]):math.floor(size[1]*roi[3][1]), :] = cv2.addWeighted(img_slice, 1, lanes, 0.6, 0)
+
+    image = cv2.resize(image, (1280, 720))
     
     if write:
-        cv2.putText(img, 'Mean LC: {:.0f} m'.format(mean_curverad[0]), (10, 30), font, fontSize, fontColor, thickness)
-        cv2.putText(img, 'Mean RC: {:.0f} m'.format(mean_curverad[1]), (10, 50), font, fontSize, fontColor, thickness)
-        cv2.putText(img, 'Mean CC: {:.0f} m'.format(mean_lane_curve), (10, 70), font, fontSize, fontColor, thickness)
-        cv2.putText(img, 'Mean VO: {:.4f} m'.format(mean_vehicle_offset), (10, 90), font, fontSize, fontColor, thickness)
-        
-        cv2.putText(img, 'Median LC: {:.0f} m'.format(median_curverad[0]), (10, 110), font, fontSize, fontColor, thickness)
-        cv2.putText(img, 'Median RC: {:.0f} m'.format(median_curverad[1]), (10, 130), font, fontSize, fontColor, thickness)
-        cv2.putText(img, 'Median CC: {:.0f} m'.format(median_lane_curve), (10, 150), font, fontSize, fontColor, thickness)
-        cv2.putText(img, 'Median VO: {:.4f} m'.format(median_vehicle_offset), (10, 170), font, fontSize, fontColor, thickness)
-        
-        cv2.putText(img, 'Turn: {}'.format(turn), (10, 190), font, fontSize, fontColor, thickness)
+        cv2.putText(image, 'Mean Left Lane Radius: {:.0f} m'.format(mean_left_curve), (10, 30), font, fontSize, fontColor, thickness)
+        cv2.putText(image, 'Median Left Lane Radius: {:.0f} m'.format(median_left_curve), (10, 55), font, fontSize, fontColor, thickness)
 
+        cv2.putText(image, 'Mean Right Lane Radius: {:.0f} m'.format(mean_right_curve), (10, 80), font, fontSize, fontColor, thickness)
+        cv2.putText(image, 'Median Right Lane Radius: {:.0f} m'.format(median_right_curve), (10, 105), font, fontSize, fontColor, thickness)
 
+        cv2.putText(image, 'Mean Center Lane Radius: {:.0f} m'.format(mean_lane_curve), (10, 130), font, fontSize, fontColor, thickness)
+        cv2.putText(image, 'Median Center Lane Radius: {:.0f} m'.format(median_lane_curve), (10, 155), font, fontSize, fontColor, thickness)
+
+        cv2.putText(image, 'Mean Vehicle Offset: {:.4f} m'.format(mean_vehicle_offset), (10, 180), font, fontSize, fontColor, thickness)
+        cv2.putText(image, 'Median Vehicle Offset: {:.4f} m'.format(median_vehicle_offset), (10, 205), font, fontSize, fontColor, thickness)
+
+        cv2.putText(image, 'Mean Center Angle: {:.2f}'.format(mean_center_angle), (10, 230), font, fontSize, fontColor, thickness)  
+        cv2.putText(image, 'Median Center Angle: {:.2f}'.format(median_center_angle), (10, 255), font, fontSize, fontColor, thickness)
+
+        cv2.putText(image, 'Turn: {}'.format(turn), (10, 280), font, fontSize, fontColor, thickness)
+
+    image = cv2.resize(image, size)
     # Assemble the visual frame if requested
     visual_frame = None
     if show:
-        visual_frame = np.concatenate((cv2.addWeighted(img_slice, 1, lanes_slice, 1, 0),sliding,cv2.cvtColor(lanes, cv2.COLOR_RGB2BGR)), axis=0)
+        visual_frame = np.concatenate((cv2.addWeighted(cv2.cvtColor(img_slice, cv2.COLOR_RGB2BGR), 1, lanes_slice, 1, 0),sliding,cv2.cvtColor(lanes, cv2.COLOR_RGB2BGR)), axis=0)
 
         line_y = thresh.shape[0]
         cv2.line(visual_frame, (0,line_y), (visual_frame.shape[1],line_y), (255,255,255), 2)
@@ -532,7 +571,7 @@ def vid_pipeline(img, cache, roi, write=True, show=True):
         line_y+= lanes.shape[0]
         cv2.line(visual_frame, (0,line_y), (visual_frame.shape[1],line_y), (255,255,255), 2)
 
-        visual_frame = cv2.resize(visual_frame, (img.shape[1], img.shape[0]),  interpolation = cv2.INTER_AREA)  
+        visual_frame = cv2.resize(visual_frame, (image.shape[1], image.shape[0]),  interpolation = cv2.INTER_AREA)  
 
-    return (img, mean_lane_curve, mean_curverad[0], mean_curverad[1], mean_vehicle_offset, turn, visual_frame)
+    return np.copy(image), np.copy(visual_frame), ((mean_lane_curve, mean_left_curve, mean_right_curve, mean_vehicle_offset, mean_center_angle), (median_lane_curve, median_left_curve, median_right_curve, median_vehicle_offset, median_center_angle), turn)
 

@@ -19,18 +19,18 @@ class VPS(object):
 	record_file = None,
 	record_raw = False,
 	record_processed = False,
-	show_visuals = True,
-	show_data = True,
+	show_visuals = False,
+	show_data = False,
 	calib = False, 
 	invert = False, 
 	lanes = True, 
 	objects = True, 
 	detect_all = False, 
 	return_data = False,
-	readout = True,
-	cache_size = 5,
+	readout = False,
+	cache_size = 15,
 	size = (640,360), 
-	region_of_interest = [[0.48,0.70],[0.62,0.70],[.85,.95],[.15,.95]]):
+	region_of_interest = [[0.46,0.72],[0.64,0.72],[.85,.95],[.15,.95]]):
 
 		self.CONF = CONF
 		self.record_raw = record_raw
@@ -83,7 +83,7 @@ class VPS(object):
 					os.makedirs('tests/'+record_file)
 				width = size[0]
 				if self.show_visuals:
-					width = size[0]*2
+					width *= 2
 				self.out_processed = cv2.VideoWriter('tests/{}/{}_processed.mp4'.format(record_file,record_file),cv2.VideoWriter_fourcc(*'XVID'), 30, (width, size[1]))
 		except:
 			print('Record File Not Specified!')
@@ -221,7 +221,7 @@ class VPS(object):
 		#cv2.imshow('vehicles', vehicles_detected)
 
 		while len(vehicle_packet) < 5:
-			vehicle_packet.append((0,None,0,None))
+			vehicle_packet.append((0, None, 0, None, 0, 0))
 
 		vehicle_packet = sorted(vehicle_packet, key=lambda l:l[2], reverse=True)
 		vehicle_packet = list(np.array(vehicle_packet)[:5])
@@ -229,45 +229,52 @@ class VPS(object):
 		if self.lanes:
 			rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 			try:
-				detection_data = ld.vid_pipeline(rgb_frame, cache=self.lane_cache, roi=pipe_roi_detected, write=self.show_data, show=self.show_visuals)
+				lane_image, visual_image, detection_data = ld.vid_pipeline(rgb_frame, cache=self.lane_cache, roi=pipe_roi_detected, write=self.show_data, show=self.show_visuals)
 			except Exception as ex:
 				print(ex)
 				detection_data = (frame, 0, 0, 0, 0, 'Not Detected', np.zeros_like(frame))
-			processed_frame = np.maximum(detection_data[0],vehicles_detected)
-			lane_curve = detection_data[1]
-			left_curve = detection_data[2]
-			right_curve = detection_data[3]
-			vehicle_offset = detection_data[4]
-			turn = detection_data[5]
-			visuals = detection_data[6]
+			processed_frame = np.maximum(lane_image, vehicles_detected)
+			mean_lane_curve = detection_data[0][0]
+			mean_left_curve = detection_data[0][1]
+			mean_right_curve = detection_data[0][2]
+			mean_vehicle_offset = detection_data[0][3]
+			mean_center_angle = detection_data[0][4]
+
+			median_lane_curve = detection_data[1][0]
+			median_left_curve = detection_data[1][1]
+			median_right_curve = detection_data[1][2]
+			median_vehicle_offset = detection_data[1][3]
+			median_center_angle = detection_data[1][4]
+
+			turn = detection_data[2]
 			
 			if self.readout:
-				print('Left Curve: {:6.0f}\tRight Curve: {:6.0f}\tCenter Curve: {:6.0f}\tVehicle Offset: {:.4f}\t\tTurn: {}\t\t\t'.format(left_curve, right_curve, lane_curve, vehicle_offset, turn), end='\r')
+				print('Left Curve: {:6.0f}\tRight Curve: {:6.0f}\tCenter Curve: {:6.0f}\tVehicle Offset: {:.4f}\t\tTurn: {}\t\t\t'.format(mean_left_curve, mean_right_curve, mean_lane_curve, mean_vehicle_offset, turn), end='\r')
 
 			processed_frame = cv2.cvtColor(processed_frame, cv2.COLOR_RGB2BGR)
 			#draw_region_of_interest = [pipe_roi_detected[0], pipe_roi_detected[1], pipe_roi_detected[3], pipe_roi_detected[2]]
 			#cv2.polylines(processed_frame, [np.array(np.float32(draw_region_of_interest)*np.float32(self.size), np.int32)], True, (255,0,0), 1)
 
 		if self.show_visuals and self.lanes:
-			processed_frame = np.concatenate((visuals, processed_frame), axis=1)
+			processed_frame = np.concatenate((visual_image, processed_frame), axis=1)
 
 		if self.record_processed:
 			self.out_processed.write(processed_frame)
 
 		if not self.return_data:
 			return processed_frame
-		return (left_curve, right_curve, lane_curve, vehicle_offset, turn), vehicle_packet, processed_frame
+		return (mean_left_curve, mean_right_curve, mean_lane_curve, mean_vehicle_offset, mean_center_angle, median_left_curve, median_right_curve, median_lane_curve, median_vehicle_offset, median_center_angle, turn), vehicle_packet, processed_frame
 
 
 if __name__ == "__main__":
-	cap = cv2.VideoCapture('D:/data/sess_06/sess_06.mp4')
+	cap = cv2.VideoCapture('data_cleaned/sess_07/split_9/split_9.mp4')
 	
 	#cap = cv2.VideoCapture('/dev/video2')
 	cap.set(3, 1280)
 	cap.set(4, 720)
 	
 
-	vps = VPS(show_visuals=True, show_data = True, objects=False, invert=False, record_processed=True, position_camera=False, record_file='test_10', readout=False, return_data=True)
+	vps = VPS(objects=False, show_data=True, record_processed=True, record_file='sess_07_split_9')
 
 	while True:
 		ret, frame = cap.read()
@@ -275,7 +282,7 @@ if __name__ == "__main__":
 		if not ret:
 			print('Frame Not Detected')
 			break
-		lane_data, vehicle_data, frame = vps.road_vision(frame)
+		frame = vps.road_vision(frame)
 		#print(lane_data)
 		#print(vehicle_data)
 

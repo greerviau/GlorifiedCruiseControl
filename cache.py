@@ -11,12 +11,12 @@ class Cache():
         self.cache.append(element)
         self.size+=1
         if self.size > self.max_size:
-            del self.cache[0]
+            self.cache.pop(0)
             self.size = self.max_size
     
     def mean(self, i):
         column = [element[i] for element in self.cache]
-        return np.mean(np.array(column), axis=0)
+        return np.mean(np.array(column), axis=0).copy()
 
     def median(self, i):
         column = [element[i] for element in self.cache]
@@ -36,16 +36,16 @@ class Cache():
         return len(self.cache[0])
 
     def get_last(self):
-        return self.cache[self.size-1]
+        return self.cache[self.size-1].copy()
 
     def get_all(self):
-        return self.cache
+        return self.cache.copy()
     
     def get_all_index(self, i):
-        return [row[i] for row in self.cache]
+        return [row[i] for row in self.cache].copy()
 
     def get_index(self, i):
-        return self.cache[i]
+        return self.cache[i].copy()
         
     def get_at_index(self, i, j):
         return self.cache[i][j]

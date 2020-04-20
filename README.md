@@ -3,6 +3,7 @@
 ## Overview
 Senior Capstone Project 2019-2020
 A perception system that detects lanes and vehicles from a video feed of the road and uses that data to train a neural network to predict my driving behavior.
+This process is know as [Behavioral Cloning](https://arxiv.org/abs/1805.01954). In this case the AI system is attempting to recreate the driving behavior observed in the data.
 
 ## TODO
 * Perception System

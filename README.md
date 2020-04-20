@@ -35,7 +35,7 @@ The lane detection uses a combination of perspective transformation, color thres
 Download the lanenet models and data [here](https://drive.google.com/open?id=1Z2HSItBayCRa3pg1CEn0S_xn8LLLwIGD)
 
 ### Vehicle Detection
-**NOTE: Did not end up using vehicle detection in conjunction with the perception system for computation limitations. Possible to implement this in the future.**
+#### NOTE: Did not end up using vehicle detection in conjunction with the perception system for computation limitations. Possible to implement this in the future.
 A pretrained implementation of Google MobileNetSSD Network that detects vehicles from the video feed. Metrics about each vehicle are calculated such as lane position (left, right, mine) and distance to the vehicle.
 
 ## Prediction Network

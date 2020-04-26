@@ -50,7 +50,11 @@ https://github.com/chuanqi305/MobileNet-SSD
 ### Advanced Lane Detection
 https://towardsdatascience.com/teaching-cars-to-see-advanced-lane-detection-using-computer-vision-87a01de0424f
 https://towardsdatascience.com/advanced-lane-detection-for-autonomous-vehicles-using-computer-vision-techniques-f229e4245e41
-### OBD Python Library
-https://python-obd.readthedocs.io/en/latest/
+### SCNN LaneNet
+https://towardsdatascience.com/tutorial-build-a-lane-detector-679fd8953132
+https://github.com/cardwing/Codes-for-Lane-Detection
+### OpenDBC & Cabana
+https://github.com/commaai/opendbc
+https://github.com/commaai/cabana
 ### NVIDIA Paper on predicting steering commands with a Convolutional Network
 https://arxiv.org/pdf/1604.07316v1.pdf

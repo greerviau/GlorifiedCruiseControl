@@ -10,8 +10,7 @@ Git clone the repository and ```cd``` into the directory
 ``` 
 git clone https://github.com/greerviau/GlorifiedCruiseControl.git && cd GlorifiedCruiseControl
 ```
-Download [SCNN_lanenet_models](https://drive.google.com/open?id=1Z2HSItBayCRa3pg1CEn0S_xn8LLLwIGD) and extract into GlorifiedCruiseControl
-Download [Mobile Net SSD](https://drive.google.com/open?id=1jn0Pck59j09D24rzof3F0mv2_m80-AwG) and extract into GlorifiedCruiseControl
+Download [SCNN_lanenet_models](https://drive.google.com/open?id=1Z2HSItBayCRa3pg1CEn0S_xn8LLLwIGD) and extract the contents into ```GlorifiedCruiseControl/SCNN_lanenet```
 
 ## Usage 
 ### Data Collection

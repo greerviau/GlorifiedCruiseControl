@@ -10,14 +10,14 @@ import tensorflow as tf
 
 from sklearn.model_selection import train_test_split
 
-def train(X_train, Y_train, X_val, Y_val, batch_size=8, restore=False):
+def train(X_train, Y_train, X_val, Y_val, max_epochs=20, batch_size=8, save_path=None, restore=False):
     batch_num = len(X_train)//batch_size
     with tf.Session() as sess:
         if restore:
-            saver.restore(sess, 'conv_net/conv_net.ckpt')
+            saver.restore(sess, save_path+'conv_net.ckpt')
         else:
             sess.run(tf.global_variables_initializer())
-        for epoch in range(20):
+        for epoch in range(max_epochs):
             avg_loss = []
             for batch in range(batch_num):
                 b_start = batch*batch_size
@@ -43,17 +43,21 @@ def train(X_train, Y_train, X_val, Y_val, batch_size=8, restore=False):
             np.random.seed(547)
             np.random.shuffle(Y_train)
             
-            if not os.path.exists('conv_net'):
-                os.makedirs('conv_net')
-            saver.save(sess, 'conv_net/conv_net.ckpt')
+            if not os.path.exists('save_path'):
+                os.makedirs('save_path')
+            saver.save(sess, save_path+'/conv_net.ckpt')
 
 train_vars = tf.trainable_variables()
 network = conv_net(x, keep_prob)
-loss = tf.reduce_mean(tf.square(tf.subtract(network, y)))
+loss = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(network, y))))
 optimizer = tf.train.AdamOptimizer(1e-4).minimize(loss)
 saver = tf.train.Saver()
 
-'''
+SAVE_PATH='conv_net/conv_net_v1'
+BATCH_SIZE=16
+EPOCHS=20
+
+
 X = np.load(os.path.join('data_processed_raw/back_road_01_processed/X.npy'))
 Y = pd.read_csv(os.path.join('data_processed_raw/back_road_01_processed/Y.csv'))['Steering Angle'].to_numpy()
 
@@ -82,8 +86,8 @@ print(X.shape, Y.shape)
 
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
         
-train(X_train, Y_train, X_test, Y_test, batch_size=16, restore=False)
-'''
+train(X_train, Y_train, X_test, Y_test, max_epochs=EPOCHS, batch_size=16, save_path=SAVE_PATH, restore=False)
+
 
 print('\nRetrain 1##############################################')
 # X = np.load(os.path.join('data_processed_raw/back_road_01_processed/X.npy'))
@@ -114,8 +118,7 @@ print(X.shape, Y.shape)
 
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
         
-train(X_train, Y_train, X_test, Y_test, batch_size=16, restore=True)
-
+train(X_train, Y_train, X_test, Y_test, max_epochs=EPOCHS, batch_size=16, save_path=SAVE_PATH, restore=True)
 
 X, Y, X_train, Y_train, X_test, Y_test = None, None, None, None, None, None
 print('\nRetrain 2##############################################')
@@ -140,14 +143,14 @@ Y = np.concatenate((Y, pd.read_csv(os.path.join('data_processed_raw/sess_07_proc
 X = np.concatenate((X, np.load(os.path.join('data_processed_raw/sess_08_processed/X.npy'))), axis=0)
 Y = np.concatenate((Y, pd.read_csv(os.path.join('data_processed_raw/sess_08_processed/Y.csv'))['Steering Angle'].to_numpy()), axis=0)
 
-# X = np.concatenate((X, np.load(os.path.join('data_processed_raw/sess_09_processed/X.npy'))), axis=0)
-# Y = np.concatenate((Y, pd.read_csv(os.path.join('data_processed_raw/sess_09_processed/Y.csv'))['Steering Angle'].to_numpy()), axis=0)
+X = np.concatenate((X, np.load(os.path.join('data_processed_raw/sess_09_processed/X.npy'))), axis=0)
+Y = np.concatenate((Y, pd.read_csv(os.path.join('data_processed_raw/sess_09_processed/Y.csv'))['Steering Angle'].to_numpy()), axis=0)
 
 print(X.shape, Y.shape)
 
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
         
-train(X_train, Y_train, X_test, Y_test, batch_size=16, restore=True)
+train(X_train, Y_train, X_test, Y_test, max_epochs=EPOCHS, batch_size=16, save_path=SAVE_PATH, restore=True)
 
 
 X, Y, X_train, Y_train, X_test, Y_test = None, None, None, None, None, None
@@ -180,7 +183,7 @@ print(X.shape, Y.shape)
 
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
         
-train(X_train, Y_train, X_test, Y_test, batch_size=16, restore=True)
+train(X_train, Y_train, X_test, Y_test, max_epochs=EPOCHS, batch_size=16, save_path=SAVE_PATH, restore=True)
 
 
 X, Y, X_train, Y_train, X_test, Y_test = None, None, None, None, None, None
@@ -213,7 +216,7 @@ print(X.shape, Y.shape)
 
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
         
-train(X_train, Y_train, X_test, Y_test, batch_size=16, restore=True)
+train(X_train, Y_train, X_test, Y_test, max_epochs=EPOCHS, batch_size=16, save_path=SAVE_PATH, restore=True)
 
 
 X, Y, X_train, Y_train, X_test, Y_test = None, None, None, None, None, None
@@ -246,7 +249,7 @@ print(X.shape, Y.shape)
 
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
         
-train(X_train, Y_train, X_test, Y_test, batch_size=16, restore=True)
+train(X_train, Y_train, X_test, Y_test, max_epochs=EPOCHS, batch_size=16, save_path=SAVE_PATH, restore=True)
 
 
 X, Y, X_train, Y_train, X_test, Y_test = None, None, None, None, None, None
@@ -279,7 +282,7 @@ print(X.shape, Y.shape)
 
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
         
-train(X_train, Y_train, X_test, Y_test, batch_size=16, restore=True)
+train(X_train, Y_train, X_test, Y_test, max_epochs=EPOCHS, batch_size=16, save_path=SAVE_PATH, restore=True)
 
 
 X, Y, X_train, Y_train, X_test, Y_test = None, None, None, None, None, None
@@ -312,7 +315,7 @@ print(X.shape, Y.shape)
 
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
         
-train(X_train, Y_train, X_test, Y_test, batch_size=16, restore=True)
+train(X_train, Y_train, X_test, Y_test, max_epochs=EPOCHS, batch_size=16, save_path=SAVE_PATH, restore=True)
 
 
 
@@ -327,7 +330,7 @@ Y = Y[:10000]
 
 y_pred = []
 with tf.Session() as sess:
-    saver.restore(sess, 'conv_net/conv_net.ckpt')
+    saver.restore(sess, 'conv_net/conv_net_v2/conv_net.ckpt')
     for frame, angle in zip(X, Y):
         pred = sess.run(network, feed_dict={x:[frame], keep_prob:1.0})[0][0]
         y_pred.append(pred)

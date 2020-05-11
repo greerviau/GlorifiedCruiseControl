@@ -5,6 +5,37 @@ Senior Capstone Project 2019-2020
 A perception system that detects lanes and vehicles from a video feed of the road and uses that data to train a neural network to predict my driving behavior.
 This process is know as [Behavioral Cloning](https://arxiv.org/abs/1805.01954). In this case the AI system is attempting to recreate the driving behavior observed in the data.
 
+## Installation
+Git clone the repository and ```cd``` into the directory
+``` 
+git clone https://github.com/greerviau/GlorifiedCruiseControl.git && cd GlorifiedCruiseControl
+```
+Download [SCNN_lanenet_models](https://drive.google.com/open?id=1Z2HSItBayCRa3pg1CEn0S_xn8LLLwIGD) and extract into GlorifiedCruiseControl
+Download [Mobile Net SSD](https://drive.google.com/open?id=1jn0Pck59j09D24rzof3F0mv2_m80-AwG) and extract into GlorifiedCruiseControl
+
+## Usage 
+### Data Collection
+#### Game Settings
+Make sure the game detects your gamepad<br/>
+Make sure the input is a controller and **NOT A WHEEL**<br/>
+Make sure that the controller **B** button is bound to roof camera in game<br/>  
+Use **1280x720** resolution in game<br/>  
+
+#### Recording Data
+To collect data run ```python3 collect_raw_data.py <session>``` Make sure to specify different sessions for every execution.<br/>  
+Recording sessions will be saved to ```data/<session>```
+#### Cleaning
+If additional cleaning is required, run ```python3 clip_video.py``` While video is playing, press **q** to keyframe. Once video is done playing the program will split the video along key frames and saved to ```data_cleaned/<session>/<clips>/<splits>```<br/>   
+Use this to clip out lane changes and other unwanted data.<br/>   
+### Preprocessing
+Once the data has been cleaned, run ```python3 preprocess_data_raw.py``` This will preprocess all of the clips in ```data_cleaned``` The subfolders of this directory must have the file structure of ```data_cleaned/<session>``` with the mp4 and csv files within.<br/>  
+This will save the preprocessed data to ```data_processed``` The data will be divided into sessions but the clips will be aggregated into X.npy and Y.csv<br/>    
+### Training
+After preprocessing, open ```train_conv_net.py``` Make sure to specify the SAVE_PATH for the model as well as the hyperparams.<br/> 
+Run ```python3 train_conv_net.py``` to train the model.
+### Testing
+In ```visual_interface.py``` specify the CONV_NET_MODEL directory for your saved model. Also specify if you want to record data from the test.<br/>
+
 ## TODO
 * Perception System
   * [x] Fix problem with shadows casted on lane lines (This is too difficult to worry about)
@@ -31,8 +62,6 @@ An opencv system that detects lane lines and vehicles.
 
 ### Lane Detection
 The lane detection uses a combination of perspective transformation, color thresholding, sliding window detection and polynomial function fitting to detect the lane lines and calculate the curvature and direction of the lane.
-#### SCNN Lanenet
-Download the lanenet models and data [here](https://drive.google.com/open?id=1Z2HSItBayCRa3pg1CEn0S_xn8LLLwIGD)
 
 ### Vehicle Detection
 #### NOTE: Did not end up using vehicle detection in conjunction with the perception system for computation limitations. Possible to implement this in the future.

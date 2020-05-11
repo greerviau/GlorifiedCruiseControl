@@ -40,15 +40,7 @@ for session in session_folders:
         print(split)
         road_video = cv2.VideoCapture(os.path.join(split_dir, split, split+'.mp4'))
 
-        wheel_data = pd.read_csv(os.path.join(split_dir, split, split+'.csv'))['Steering Angle'].to_numpy()
-
-        #wheel_data = wheel_data * scipy.pi / 180
-
-        #wheel_data = pd.DataFrame(wheel_data, columns=['Steering Angle'])
-
-        #wheel_data.reset_index(drop=True)
-
-        #aggregate_data.append(wheel_data)    
+        wheel_data = pd.read_csv(os.path.join(split_dir, split, split+'.csv'))['Steering Angle'].to_numpy()  
 
         frame_count = 0
         pro_data = []
@@ -68,12 +60,10 @@ for session in session_folders:
                 size = frame.shape
                 frame = frame[size[0]//2:, :, :]
                 frame = cv2.resize(frame, (200, 60))
-
-                #normal_frame = normalize(frame).astype(np.float16)
-                #normal_frame = frame / 127.5 - 1.0
+                
+                #Normalize frame
                 normal_frame = frame / 127.5 - 1.0
-                #print("%d bytes" % (normal_frame.size * normal_frame.itemsize))
-                #print('Min {:.2f} Max {:.2f} Mean {:.2f}'.format(np.min(normal_frame), np.max(normal_frame), np.mean(normal_frame)))
+
                 pro_data.append([np.copy(normal_frame).astype(np.float16), wheel_data[frame_count]])
 
                 cv2.imshow('Frame', frame)
@@ -81,6 +71,11 @@ for session in session_folders:
                     break
             frame_count += 1
 
+        '''
+        BALLANCE DATA
+        To ballance data, split into left right and straigt samples
+        Make all sample collections the same length
+        '''
         left_samples = []
         right_samples = []
         center_samples = []
@@ -96,7 +91,11 @@ for session in session_folders:
         print('Right: ',len(right_samples))
         print('Straight: ',len(center_samples))
 
-        center_samples = center_samples[:len(center_samples)//4]
+        limit = min(len(left_samples), len(right_samples), len(center_samples))
+
+        left_samples = left_samples[:limit]
+        right_samples = right_samples[:limit]
+        center_samples = center_samples[:limit]
 
         left_samples = np.array(left_samples)
         right_samples = np.array(right_samples)
@@ -128,11 +127,14 @@ for session in session_folders:
         road_video.release()
         cv2.destroyAllWindows()
 
+    #SHUFFLE DATA
     np.random.seed(547)
     np.random.shuffle(aggregate_data)
     np.random.seed(547)
     np.random.shuffle(total_frames)
     print('Num frames: {} Data length: {}'.format(len(total_frames), len(aggregate_data)))
+
+    #SAVE AGGREGATE
     aggregate_data = pd.DataFrame(aggregate_data, columns=['Steering Angle'])
     aggregate_data.to_csv(os.path.join(session_data_dir, 'Y.csv'))
     total_frames = np.array(total_frames)

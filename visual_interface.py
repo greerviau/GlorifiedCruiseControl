@@ -11,25 +11,28 @@ from utils import *
 from sklearn.metrics import r2_score
 from tensorflow.keras.models import load_model
 
-video = cv2.VideoCapture('data_cleaned/sess_10/split_1/split_1.mp4')
-obd_data = pd.read_csv('data_cleaned/sess_10/split_1/split_1.csv')
+video = cv2.VideoCapture('data_cleaned/sess_01/split_6/split_6.mp4')
+obd_data = pd.read_csv('data_cleaned/sess_01/split_6/split_6.csv')
 #cap = cv2.VideoCapture(cv2.CAP_DSHOW)
 video.set(3, 1280)
 video.set(4, 720)
+
+CONV_NET_MODEL='conv_net/conv_net_v2'
+
 
 from conv_net_model import *
 network = conv_net(x, keep_prob)
 saver = tf.train.Saver()
 
 sess = tf.Session()
-saver.restore(sess, 'conv_net/conv_net.ckpt')
+saver.restore(sess, CONV_NET_MODEL+'/conv_net.ckpt')
 '''
 
 from road_vision import VPS
 vps = VPS(objects=False, return_data=True)
 dnn_model = load_model('dnn.h5')
 '''
-#pred_model = pkl.load(open('regression_model.pkl', 'rb'))
+
 
 wheel = cv2.imread('steering_wheel.png',0)
 wheel = cv2.resize(wheel, (200,200))
@@ -42,7 +45,7 @@ angle = 0
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
-#inter_out = cv2.VideoWriter("visual_interface.mp4",cv2.VideoWriter_fourcc(*'XVID'), 30,(1300,700))
+inter_out = cv2.VideoWriter("tests/vis_dnn_1.mp4",cv2.VideoWriter_fourcc(*'XVID'), 30,(1280,720))
 
 graphs = 50
 add_to_graph = 1
@@ -82,14 +85,14 @@ while True:
 
     steering_angle_pred = round(steering_angle_pred * 2) / 2
     '''
-
     input_frame = frame[frame.shape[0]//2:, :, :]
     input_frame = cv2.resize(input_frame, (200, 60)) / 127.5 - 1.0
     input_frame = input_frame.astype(np.float16)
     steering_angle_pred = sess.run(network, feed_dict={x:[input_frame], keep_prob:1.0})[0][0] * 180 / scipy.pi
     steering_angle_pred = round(steering_angle_pred * 2) / 2
+    
 
-    visual_frame = np.zeros((700,1300,3), dtype=np.uint8)
+    visual_frame = np.zeros((720,1280,3), dtype=np.uint8)
     #Video Frame
     visual_frame[:frame.shape[0],:frame.shape[1]] = frame
     #Wheel graphics
@@ -123,14 +126,17 @@ while True:
     
     visual_frame[380:380+ang_graph.shape[0],30:30+ang_graph.shape[1]] = ang_graph
 
-    error = abs(steering_angle - steering_angle_pred) / 10
+    error = abs(steering_angle - steering_angle_pred) / 100
     error_cache.add([error])
 
-    acc_graph = line_graph(error_cache.get_all_index(0), error_cache.mean(0), 100, (400,300), ['Time', '0', '100'], ['Degrees of Error', '0', '10'])
+    acc_graph = line_graph(error_cache.get_all_index(0), error_cache.mean(0), 100, (400,300), ['Time', '0', '100'], ['Degrees of Error', '0', '100'])
 
     visual_frame[380:380+acc_graph.shape[0],430:430+acc_graph.shape[1]] = acc_graph
-
-    r2 = r2_score(truth_cache.get_all_index(0), pred_cache.get_all_index(0)) / 100
+    if frame_count > 1:
+        r2 = r2_score(truth_cache.get_all_index(0), pred_cache.get_all_index(0)) / 100
+    else:
+        r2 = 0.0
+    #print(r2)
     r2_cache.add([r2])
     #print(truth_cache.get_all_index(0))
     #print(pred_cache.get_all_index(0))
@@ -142,11 +148,11 @@ while True:
 
     #cv2.imshow('frame', frame)
     cv2.imshow('Interface', visual_frame)
-    #inter_out.write(visual_frame)
+    inter_out.write(visual_frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
     time.sleep(0.02)
 
-#inter_out.release()
+inter_out.release()
 video.release()
 cv2.destroyAllWindows()

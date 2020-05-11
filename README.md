@@ -15,12 +15,6 @@ Download [Mobile Net SSD](https://drive.google.com/open?id=1jn0Pck59j09D24rzof3F
 
 ## Usage 
 ### Data Collection
-#### Game Settings
-Make sure the game detects your gamepad<br/>
-Make sure the input is a controller and **NOT A WHEEL**<br/>
-Make sure that the controller **B** button is bound to roof camera in game<br/>  
-Use **1280x720** resolution in game<br/>  
-
 #### Recording Data
 To collect data run ```python3 collect_raw_data.py <session>``` Make sure to specify different sessions for every execution.<br/>  
 Recording sessions will be saved to ```data/<session>```

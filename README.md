@@ -1,9 +1,11 @@
 # GlorifiedCruiseControl
 
 ## Overview
-Senior Capstone Project 2019-2020
-A proof of concept autonomous driving system that takes a video feed from the road and predicts driving commands in real time.
-This process is know as [Behavioral Cloning](https://arxiv.org/abs/1805.01954). In this case the AI system is attempting to recreate the driving behavior observed in the data.
+Senior Capstone Project 2019-2020<br/>
+A proof of concept autonomous driving system that takes a video feed from the road and predicts driving commands in real time.<br/>
+This process is know as [Behavioral Cloning](https://arxiv.org/abs/1805.01954). In this case the AI system is attempting to recreate the driving behavior observed in the data.<br/>
+This project experiments with 2 methods of predicting driving behavior, the first using a perception system that takes the video feed and extracts detailed information such as lane lines, vehicles etc. and uses that information to make its prediction.<br/>
+The seconds adopts a strategy from NVIDIA where they use a Convolutional Neural Net to take video frames of the road and predict driving commands.<br/>
 
 ## Installation
 Git clone the repository and ```cd``` into the directory

@@ -2,7 +2,7 @@
 
 ## Overview
 Senior Capstone Project 2019-2020
-A perception system that detects lanes and vehicles from a video feed of the road and uses that data to train a neural network to predict my driving behavior.
+A proof of concept autonomous driving system that takes a video feed from the road and predicts driving commands in real time.
 This process is know as [Behavioral Cloning](https://arxiv.org/abs/1805.01954). In this case the AI system is attempting to recreate the driving behavior observed in the data.
 
 ## Installation
@@ -12,7 +12,11 @@ git clone https://github.com/greerviau/GlorifiedCruiseControl.git && cd Glorifie
 ```
 Download [SCNN_lanenet_models](https://drive.google.com/open?id=1Z2HSItBayCRa3pg1CEn0S_xn8LLLwIGD) and extract the contents into ```GlorifiedCruiseControl/SCNN_lanenet```
 
+## Preliminary
+Currently this system is hardcoded to collect data from Toyota vehicles, specifically Toyota 2016 Tacoma but as long as the dbc files contain the same pin assignments for SAS, Brake, Throttle and Speed it will work. In order to adjust the code to work on different vehicles there will be a lot of adjustment that needs to be done in the ```collect_data_raw.py``` script.
 ## Usage 
+In order to use this system you must have a Panda OBD-II CAN Bus Interface. Find that [here](https://comma.ai/shop/products/panda-obd-ii-dongle)<br/>
+Plug the panda into your car and connect to your laptop using a USB cable (WIFI connection is too slow).
 ### Data Collection
 #### Recording Data
 To collect data run ```python3 collect_raw_data.py <session>``` Make sure to specify different sessions for every execution.<br/>  

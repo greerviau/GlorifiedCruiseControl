@@ -34,7 +34,7 @@ dnn_model = load_model('dnn.h5')
 '''
 
 
-wheel = cv2.imread('steering_wheel.png',0)
+wheel = cv2.imread('assets/steering_wheel.png',0)
 wheel = cv2.resize(wheel, (200,200))
 truth_wheel = np.zeros((wheel.shape[0],wheel.shape[1],3))
 truth_wheel[:,:,1] = wheel

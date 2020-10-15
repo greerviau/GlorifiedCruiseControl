@@ -4,7 +4,7 @@ import math
 import sys
 import os
 from utils import invert_frame
-import lane_detection_v2 as ld
+import lane_detection as ld
 from cache import Cache
 import matplotlib.path as mpltPath
 

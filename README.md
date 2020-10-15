@@ -1,9 +1,11 @@
 # GlorifiedCruiseControl
 
 ## Overview
-Senior Capstone Project 2019-2020
-A perception system that detects lanes and vehicles from a video feed of the road and uses that data to train a neural network to predict my driving behavior.
-This process is know as [Behavioral Cloning](https://arxiv.org/abs/1805.01954). In this case the AI system is attempting to recreate the driving behavior observed in the data.
+Senior Capstone Project 2019-2020<br/>
+A proof of concept autonomous driving system that takes a video feed from the road and predicts driving commands in real time.<br/>
+This process is know as [Behavioral Cloning](https://arxiv.org/abs/1805.01954). In this case the AI system is attempting to recreate the driving behavior observed in the data.<br/>
+This project experiments with 2 methods of predicting driving behavior, the first using a perception system that takes the video feed and extracts detailed information such as lane lines, vehicles etc. and uses that information to make its prediction.<br/>
+The seconds adopts a strategy from NVIDIA where they use a Convolutional Neural Net to take video frames of the road and predict driving commands.<br/>
 
 ## Installation
 Git clone the repository and ```cd``` into the directory
@@ -12,7 +14,11 @@ git clone https://github.com/greerviau/GlorifiedCruiseControl.git && cd Glorifie
 ```
 Download [SCNN_lanenet_models](https://drive.google.com/open?id=1Z2HSItBayCRa3pg1CEn0S_xn8LLLwIGD) and extract the contents into ```GlorifiedCruiseControl/SCNN_lanenet```
 
+## Preliminary
+Currently this system is hardcoded to collect data from Toyota vehicles, specifically Toyota 2016 Tacoma but as long as the dbc files contain the same pin assignments for SAS, Brake, Throttle and Speed it will work. In order to adjust the code to work on different vehicles there will be a lot of adjustment that needs to be done in the ```collect_data_raw.py``` script.
 ## Usage 
+In order to use this system you must have a Panda OBD-II CAN Bus Interface. Find that [here](https://comma.ai/shop/products/panda-obd-ii-dongle)<br/>
+Plug the panda into your car and connect to your laptop using a USB cable (WIFI connection is too slow).
 ### Data Collection
 #### Recording Data
 To collect data run ```python3 collect_raw_data.py <session>``` Make sure to specify different sessions for every execution.<br/>  
@@ -70,15 +76,13 @@ Using a convolutional architecture for predicting steering wheel commands from r
 ### MobileNet-SSD Object Detection
 https://github.com/chuanqi305/MobileNet-SSD
 ### Advanced Lane Detection
-https://towardsdatascience.com/teaching-cars-to-see-advanced-lane-detection-using-computer-vision-87a01de0424f
+https://towardsdatascience.com/teaching-cars-to-see-advanced-lane-detection-using-computer-vision-87a01de0424f<br/>
 https://towardsdatascience.com/advanced-lane-detection-for-autonomous-vehicles-using-computer-vision-techniques-f229e4245e41
 ### SCNN LaneNet
-https://towardsdatascience.com/tutorial-build-a-lane-detector-679fd8953132
-
+https://towardsdatascience.com/tutorial-build-a-lane-detector-679fd8953132<br/>
 https://github.com/cardwing/Codes-for-Lane-Detection
 ### OpenDBC & Cabana
-https://github.com/commaai/opendbc
-
+https://github.com/commaai/opendbc<br/>
 https://github.com/commaai/cabana
 ### NVIDIA Paper on predicting steering commands with a Convolutional Network
 https://arxiv.org/pdf/1604.07316v1.pdf

@@ -5,45 +5,6 @@ import cv2
 import numpy as np 
 import sys, csv, os
 
-wheel = cv2.imread('steering_wheel.png')
-wheel = cv2.resize(wheel, (200,200))
-font = cv2.FONT_HERSHEY_SIMPLEX
-
-def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed):
-    frame = cv2.resize(frame, (600,300))
-    visual_frame = np.zeros((700,1000,3), dtype=np.uint8)
-    visual_frame[:frame.shape[0],:frame.shape[1]] = frame
-    cv2.putText(visual_frame, "Steering Angle", (720,50),font,0.7,(255,255,255),2)
-    wheel_cpy = rotate(wheel, wheel_angle)
-    visual_frame[100:100+wheel_cpy.shape[0],700:700+wheel_cpy.shape[1]] = wheel_cpy
-
-    textsize = cv2.getTextSize(str(wheel_angle), font, 0.7, 2)[0]
-
-    offX = textsize[0] // 2
-    offY = textsize[1] // 2
-
-    cv2.putText(visual_frame, str(wheel_angle), (700+(wheel_cpy.shape[1]//2)-offX, 100+(wheel_cpy.shape[0]//2)+offY), font, 0.7, (0,0,0), 2)
-
-    graph_1 = bar_graph([throttle_pos], ['Throttle Pos'], 1, (275,275))
-    graph_2 = bar_graph([brake_pos], ['Brake Pos'], 500, (275,275))
-
-    textsize = cv2.getTextSize("Throttle", font, 0.7, 2)[0]
-
-    offX = textsize[0] // 2
-
-    cv2.putText(visual_frame, "Throttle: "+str(throttle_pos), (20+(graph_1.shape[1]//2),410),font,0.7,(255,255,255), 2)
-
-    visual_frame[425:425+graph_1.shape[0],50:50+graph_1.shape[1]] = graph_1
-
-    cv2.putText(visual_frame, "Brake: "+str(brake_pos), (20+graph_1.shape[1]+50+(graph_2.shape[1]//2),410),font,0.7,(255,255,255), 2)
-
-    visual_frame[425:425+graph_2.shape[0],50+graph_1.shape[1]+50:50+graph_1.shape[1]+50+graph_2.shape[1]] = graph_2
-
-    cv2.putText(visual_frame, 'SPEED: '+str(speed)+'kph', (700, 520), font, 1, (255,255,255), 2)
-
-    cv2.imshow('Data Collection', visual_frame)
-    #inter_out.write(visual_frame)
-
 '''
 PIDS AND SLICES MUST BE ADJUSTED
 FOR DIFFERENT VEHICLES
@@ -53,13 +14,13 @@ FOR DIFFERENT VEHICLES
 #PIDS FOR SENSORS
 sas_pin = '0x25'
 gas_pin = '0x2c1'
-brake_pin = '0x226'
+brake_pin = '0x224'
 speed_pin = '0xb4'
 
 #MESSAGE SLICES
 sas_slice = slice(0,2)
 gas_slice = slice(6,7)
-brake_slice = slice(0,2)
+brake_slice = slice(4,6)
 speed_slice = slice(5,7)
 
 '''
@@ -67,7 +28,7 @@ speed_slice = slice(5,7)
 '''
 
 file_name = sys.argv[1]
-file_dir = 'data/'+file_name+'/'
+file_dir = '../GCC_Data/4Runner/'+file_name+'/'
 if not os.path.exists(file_dir):
     os.makedirs(file_dir)
 else:
@@ -236,9 +197,9 @@ try:
 
             #print(bin_full)
 
-            bin_value = int(bin_full[3:], 2)
+            bin_value = int(bin_full[1:], 2)
 
-            brake_pedal_pos = bin_value
+            brake_pedal_pos = bin_value / 2047.0
             last_brake = brake_pedal_pos
 
             #print(brake_pedal_pos)

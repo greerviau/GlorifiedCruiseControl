@@ -1,4 +1,4 @@
-# GlorifiedCruiseControl
+# GlorifiedCruiseControl V2
 
 Version 2 is currently a work in progress
 

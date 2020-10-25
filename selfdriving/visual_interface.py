@@ -1,4 +1,3 @@
-from GlorifiedCruiseControl.utils.cache import Cache
 import numpy as np 
 import cv2
 import math
@@ -7,7 +6,8 @@ import random as rnd
 import pandas as pd
 import pickle as pkl
 import scipy
-from GlorifiedCruiseControl.utils.visual_utils import *
+from utils.cache import Cache
+from utils.visual_utils import *
 from sklearn.metrics import r2_score
 from tensorflow.keras.models import load_model
 

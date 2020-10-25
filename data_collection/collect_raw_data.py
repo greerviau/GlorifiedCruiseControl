@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 from panda import Panda
-from GlorifiedCruiseControl.utils.utils import *
+from utils.utils import *
 import cv2
 import numpy as np 
 import sys, csv, os

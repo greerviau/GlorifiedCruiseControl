@@ -218,15 +218,20 @@ def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed):
 
     offX = textsize[0] // 2
 
-    cv2.putText(visual_frame, "Throttle: "+str(throttle_pos), (20+(graph_1.shape[1]//2),410),font,0.7,(255,255,255), 2)
+    cv2.putText(visual_frame, "Throttle: "+str(throttle_pos), ((graph_1.shape[1]//2),410),font,0.7,(255,255,255), 2)
 
-    visual_frame[425:425+graph_1.shape[0],50:50+graph_1.shape[1]] = graph_1
+    visual_frame[425:425+graph_1.shape[0],20:20+graph_1.shape[1]] = graph_1
 
-    cv2.putText(visual_frame, "Brake: "+str(brake_pos), (20+graph_1.shape[1]+50+(graph_2.shape[1]//2),410),font,0.7,(255,255,255), 2)
+    cv2.putText(visual_frame, "Brake: "+str(brake_pos), (graph_1.shape[1]+20+(graph_2.shape[1]//2),410),font,0.7,(255,255,255), 2)
 
-    visual_frame[425:425+graph_2.shape[0],50+graph_1.shape[1]+50:50+graph_1.shape[1]+50+graph_2.shape[1]] = graph_2
+    visual_frame[425:425+graph_2.shape[0],20+graph_1.shape[1]+20:20+graph_1.shape[1]+20+graph_2.shape[1]] = graph_2
 
-    cv2.putText(visual_frame, 'SPEED: '+str(speed)+'kph', (700, 520), font, 1, (255,255,255), 2)
+    cv2.putText(visual_frame, 'SPEED: '+str(speed)+'kph', (660, 520), font, 1, (255,255,255), 2)
 
     cv2.imshow('Data Collection', visual_frame)
     #inter_out.write(visual_frame)
+
+if __name__ == "__main__":
+    visualization(np.ones((600,300,3))*255, 400, 0.5, 0.5, 20)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()

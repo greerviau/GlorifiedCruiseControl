@@ -9,7 +9,7 @@ The the Neural Network model is adopted from NVIDIA where they use a Convolution
 
 ## TODO
 * Clean up files, make things neat
-* Objectify a lot of the codebase
+* Refactor and objectify the codebase
 * Migrate Deep Learning model to pytorch
 * Build a web interface instead of using opencv
 * Build a control interface to send messages to the car

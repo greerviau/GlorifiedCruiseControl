@@ -19,19 +19,12 @@ video.set(4, 720)
 
 CONV_NET_MODEL='conv_net/conv_net_v2'
 
-
 from conv_net_model import *
 network = conv_net(x, keep_prob)
 saver = tf.train.Saver()
 
 sess = tf.Session()
 saver.restore(sess, CONV_NET_MODEL+'/conv_net.ckpt')
-'''
-
-from road_vision import VPS
-vps = VPS(objects=False, return_data=True)
-dnn_model = load_model('dnn.h5')
-'''
 
 
 wheel = cv2.imread('assets/steering_wheel.png',0)
@@ -45,7 +38,7 @@ angle = 0
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
-inter_out = cv2.VideoWriter("tests/vis_dnn_1.mp4",cv2.VideoWriter_fourcc(*'XVID'), 30,(1280,720))
+inter_out = cv2.VideoWriter("tests/conv_1.mp4",cv2.VideoWriter_fourcc(*'XVID'), 30,(1280,720))
 
 graphs = 50
 add_to_graph = 1
@@ -66,25 +59,6 @@ while True:
     steering_angle = obd_data.iloc[frame_count,1]
     frame_count+=1
 
-    '''
-    lane_data, vehicle_data, frame = vps.road_vision(frame)
-    #print(steering_angle)
-
-    #(mean_left_curve, mean_right_curve, mean_lane_curve, mean_vehicle_offset, mean_center_angle, median_left_curve, median_right_curve, median_lane_curve, median_vehicle_offset, median_center_angle, turn)
-
-    lane_curve = lane_data[7] / 5000
-    vehicle_offset = lane_data[8]
-    center_angle = lane_data[9] * scipy.pi / 180
-    X_input = [lane_curve, vehicle_offset, center_angle]
-    #print(X_input)
-    X_input = np.array([X_input])
-    #print(X_input.shape)
-    #print(X_input)
-    
-    steering_angle_pred = dnn_model.predict(X_input)[0][0] * 180 / scipy.pi
-
-    steering_angle_pred = round(steering_angle_pred * 2) / 2
-    '''
     input_frame = frame[frame.shape[0]//2:, :, :]
     input_frame = cv2.resize(input_frame, (200, 60)) / 127.5 - 1.0
     input_frame = input_frame.astype(np.float16)

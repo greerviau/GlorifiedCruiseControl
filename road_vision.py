@@ -267,7 +267,7 @@ class VPS(object):
 
 
 if __name__ == "__main__":
-	cap = cv2.VideoCapture('data_cleaned/sess_07/split_9/split_9.mp4')
+	cap = cv2.VideoCapture('../GCC_Data/4Runner/data_cleaned/sess_07/split_9/split_9.mp4')
 	
 	#cap = cv2.VideoCapture('/dev/video2')
 	cap.set(3, 1280)

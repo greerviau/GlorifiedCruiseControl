@@ -2,6 +2,10 @@ import numpy as np
 import cv2 
 import itertools
 import math
+import random
+
+FONT = cv2.FONT_HERSHEY_SIMPLEX
+WHEEL = cv2.resize(cv2.imread('../assets/steering_wheel.png'), (150,150))
 
 def invert_frame(frame):
     (H,W) = frame.shape[:2]
@@ -11,8 +15,6 @@ def invert_frame(frame):
     return frame
 
 def bar_graph(data, labels, ylim, size):
-
-    font = cv2.FONT_HERSHEY_SIMPLEX
 
     lst_colors = list(map(list, itertools.product([0, 255], repeat=3)))
 
@@ -33,13 +35,13 @@ def bar_graph(data, labels, ylim, size):
         fontsize = 0.5
 
         while True:
-            textsize = cv2.getTextSize(l, font, fontsize, 1)[0]
+            textsize = cv2.getTextSize(l, FONT, fontsize, 1)[0]
             offX = (w-textsize[0])//2
             if offX >= 0:
                 break
             fontsize -= 0.05
 
-        cv2.putText(graph_frame, l, (x+offX, 220), font, fontsize, (255,255,255), 1)
+        cv2.putText(graph_frame, l, (x+offX, 220), FONT, fontsize, (255,255,255), 1)
 
         x += w + bar_buf
 
@@ -51,7 +53,6 @@ def bar_graph(data, labels, ylim, size):
     return graph_frame
 
 def line_graph(data, avg, xlim, size, x_label, y_label):
-    font = cv2.FONT_HERSHEY_SIMPLEX
     graph_frame = np.zeros((340,440,3))
     cv2.line(graph_frame, (40,300-int(avg*300)), (440,300-int(avg*300)), (0,0,255), 2)
     #print(len(data))
@@ -66,24 +67,24 @@ def line_graph(data, avg, xlim, size, x_label, y_label):
         current_point = next_point
 
     rot_text = np.zeros((40,200,3))
-    textsize = cv2.getTextSize(str(y_label[0]), font, 0.7, 2)[0]
-    cv2.putText(rot_text, y_label[0],(100-textsize[0]//2,25),font,0.7,(255,255,255),2)
+    textsize = cv2.getTextSize(str(y_label[0]), FONT, 0.7, 2)[0]
+    cv2.putText(rot_text, y_label[0],(100-textsize[0]//2,25),FONT,0.7,(255,255,255),2)
     rot_text = np.rot90(rot_text,1)
     graph_frame[60:260,0:40] = rot_text
 
-    textsize = cv2.getTextSize(str(x_label[0]), font, 0.7, 2)[0]
-    cv2.putText(graph_frame,x_label[0],(40+(200-textsize[0]//2),325),font,0.7,(255,255,255),2)
+    textsize = cv2.getTextSize(str(x_label[0]), FONT, 0.7, 2)[0]
+    cv2.putText(graph_frame,x_label[0],(40+(200-textsize[0]//2),325),FONT,0.7,(255,255,255),2)
 
-    txt_w = cv2.getTextSize(str(y_label[1]), font, 0.4, 1)[0][0]
-    cv2.putText(graph_frame,y_label[1],(30-txt_w,300),font,0.4,(255,255,255),1)
+    txt_w = cv2.getTextSize(str(y_label[1]), FONT, 0.4, 1)[0][0]
+    cv2.putText(graph_frame,y_label[1],(30-txt_w,300),FONT,0.4,(255,255,255),1)
 
-    txt_w = cv2.getTextSize(str(y_label[2]), font, 0.4, 1)[0][0]
-    cv2.putText(graph_frame,y_label[2],(30-txt_w,10),font,0.4,(255,255,255),1)
+    txt_w = cv2.getTextSize(str(y_label[2]), FONT, 0.4, 1)[0][0]
+    cv2.putText(graph_frame,y_label[2],(30-txt_w,10),FONT,0.4,(255,255,255),1)
 
-    cv2.putText(graph_frame,x_label[1],(40,325),font,0.4,(255,255,255),1)
+    cv2.putText(graph_frame,x_label[1],(40,325),FONT,0.4,(255,255,255),1)
 
-    txt_w = cv2.getTextSize(str(x_label[2]), font, 0.4, 1)[0][0]
-    cv2.putText(graph_frame,x_label[2],(440-txt_w,325),font,0.4,(255,255,255),1)
+    txt_w = cv2.getTextSize(str(x_label[2]), FONT, 0.4, 1)[0][0]
+    cv2.putText(graph_frame,x_label[2],(440-txt_w,325),FONT,0.4,(255,255,255),1)
 
     cv2.line(graph_frame, (40,0), (40,300),(255,255,255), 2)
     cv2.line(graph_frame, (40,300), (440,300), (255,255,255), 2)
@@ -94,7 +95,6 @@ def line_graph(data, avg, xlim, size, x_label, y_label):
 
 
 def r2_line_graph(data, avg, xlim, size, x_label, y_label):
-    font = cv2.FONT_HERSHEY_SIMPLEX
     graph_frame = np.zeros((340,440,3))
     cv2.line(graph_frame, (40,150-int(avg*300)), (440,150-int(avg*300)), (0,0,255), 2)
     #print(len(data))
@@ -110,24 +110,24 @@ def r2_line_graph(data, avg, xlim, size, x_label, y_label):
 
     
     rot_text = np.zeros((40,200,3))
-    textsize = cv2.getTextSize(str(y_label[0]), font, 0.7, 2)[0]
-    cv2.putText(rot_text, y_label[0],(100-textsize[0]//2,25),font,0.7,(255,255,255),2)
+    textsize = cv2.getTextSize(str(y_label[0]), FONT, 0.7, 2)[0]
+    cv2.putText(rot_text, y_label[0],(100-textsize[0]//2,25),FONT,0.7,(255,255,255),2)
     rot_text = np.rot90(rot_text,1)
     graph_frame[60:260,0:40] = rot_text
 
-    textsize = cv2.getTextSize(str(x_label[0]), font, 0.7, 2)[0]
-    cv2.putText(graph_frame,x_label[0],(40+(200-textsize[0]//2),325),font,0.7,(255,255,255),2)
+    textsize = cv2.getTextSize(str(x_label[0]), FONT, 0.7, 2)[0]
+    cv2.putText(graph_frame,x_label[0],(40+(200-textsize[0]//2),325),FONT,0.7,(255,255,255),2)
 
-    txt_w = cv2.getTextSize(str(y_label[1]), font, 0.4, 1)[0][0]
-    cv2.putText(graph_frame,y_label[1],(30-txt_w,300),font,0.4,(255,255,255),1)
+    txt_w = cv2.getTextSize(str(y_label[1]), FONT, 0.4, 1)[0][0]
+    cv2.putText(graph_frame,y_label[1],(30-txt_w,300),FONT,0.4,(255,255,255),1)
 
-    txt_w = cv2.getTextSize(str(y_label[2]), font, 0.4, 1)[0][0]
-    cv2.putText(graph_frame,y_label[2],(30-txt_w,10),font,0.4,(255,255,255),1)
+    txt_w = cv2.getTextSize(str(y_label[2]), FONT, 0.4, 1)[0][0]
+    cv2.putText(graph_frame,y_label[2],(30-txt_w,10),FONT,0.4,(255,255,255),1)
 
-    cv2.putText(graph_frame,x_label[1],(40,325),font,0.4,(255,255,255),1)
+    cv2.putText(graph_frame,x_label[1],(40,325),FONT,0.4,(255,255,255),1)
 
-    txt_w = cv2.getTextSize(str(x_label[2]), font, 0.4, 1)[0][0]
-    cv2.putText(graph_frame,x_label[2],(440-txt_w,325),font,0.4,(255,255,255),1)
+    txt_w = cv2.getTextSize(str(x_label[2]), FONT, 0.4, 1)[0][0]
+    cv2.putText(graph_frame,x_label[2],(440-txt_w,325),FONT,0.4,(255,255,255),1)
 
     cv2.line(graph_frame, (40,0), (40,300),(255,255,255), 2)
     cv2.line(graph_frame, (40,300), (440,300), (255,255,255), 2)
@@ -138,7 +138,6 @@ def r2_line_graph(data, avg, xlim, size, x_label, y_label):
 
 def angle_graph(data_1, data_2, size, x_label, y_label):
 
-    font = cv2.FONT_HERSHEY_SIMPLEX
     graph_frame = np.zeros((340,440,3))
 
     cv2.line(graph_frame, (240,300), (240,0), (255,255,255), 2)
@@ -160,24 +159,24 @@ def angle_graph(data_1, data_2, size, x_label, y_label):
         count+=1
 
     rot_text = np.zeros((40,200,3))
-    textsize = cv2.getTextSize(str(y_label[0]), font, 0.7, 2)[0]
-    cv2.putText(rot_text, y_label[0],(100-textsize[0]//2,25),font,0.7,(255,255,255),2)
+    textsize = cv2.getTextSize(str(y_label[0]), FONT, 0.7, 2)[0]
+    cv2.putText(rot_text, y_label[0],(100-textsize[0]//2,25),FONT,0.7,(255,255,255),2)
     rot_text = np.rot90(rot_text,1)
     graph_frame[60:260,0:40] = rot_text
 
-    textsize = cv2.getTextSize(str(x_label[0]), font, 0.7, 2)[0]
-    cv2.putText(graph_frame,x_label[0],(40+(200-textsize[0]//2),325),font,0.7,(255,255,255),2)
+    textsize = cv2.getTextSize(str(x_label[0]), FONT, 0.7, 2)[0]
+    cv2.putText(graph_frame,x_label[0],(40+(200-textsize[0]//2),325),FONT,0.7,(255,255,255),2)
 
-    txt_w = cv2.getTextSize(str(y_label[1]), font, 0.4, 1)[0][0]
-    cv2.putText(graph_frame,y_label[1],(30-txt_w,300),font,0.4,(255,255,255),1)
+    txt_w = cv2.getTextSize(str(y_label[1]), FONT, 0.4, 1)[0][0]
+    cv2.putText(graph_frame,y_label[1],(30-txt_w,300),FONT,0.4,(255,255,255),1)
 
-    txt_w = cv2.getTextSize(str(y_label[2]), font, 0.4, 1)[0][0]
-    cv2.putText(graph_frame,y_label[2],(30-txt_w,10),font,0.4,(255,255,255),1)
+    txt_w = cv2.getTextSize(str(y_label[2]), FONT, 0.4, 1)[0][0]
+    cv2.putText(graph_frame,y_label[2],(30-txt_w,10),FONT,0.4,(255,255,255),1)
 
-    cv2.putText(graph_frame,x_label[1],(40,325),font,0.4,(255,255,255),1)
+    cv2.putText(graph_frame,x_label[1],(40,325),FONT,0.4,(255,255,255),1)
 
-    txt_w = cv2.getTextSize(str(x_label[2]), font, 0.4, 1)[0][0]
-    cv2.putText(graph_frame,x_label[2],(440-txt_w,325),font,0.4,(255,255,255),1)
+    txt_w = cv2.getTextSize(str(x_label[2]), FONT, 0.4, 1)[0][0]
+    cv2.putText(graph_frame,x_label[2],(440-txt_w,325),FONT,0.4,(255,255,255),1)
 
     cv2.line(graph_frame, (40,0), (40,300),(255,255,255), 2)
     cv2.line(graph_frame, (40,300), (440,300), (255,255,255), 2)
@@ -186,6 +185,46 @@ def angle_graph(data_1, data_2, size, x_label, y_label):
 
     return graph_frame
 
+def rounded_rectangle(img, position, width, height, border_radius, thickness, color, fill=False, fill_color=(0,0,0)):
+
+    edge_shift = int(thickness/2.0)
+
+    x, y = position
+
+    if fill:
+        cv2.ellipse(img, (x+border_radius+ edge_shift, y+border_radius+edge_shift), (border_radius, border_radius), 180, 0, 90, fill_color, -1)
+        cv2.ellipse(img, (x+width-(border_radius+thickness), y+border_radius), (border_radius, border_radius), 270, 0, 90, fill_color, -1)
+        cv2.ellipse(img, (x+width-(border_radius+thickness), y+height-(border_radius + thickness)), (border_radius, border_radius), 0, 0, 90, fill_color, -1)
+        cv2.ellipse(img, (x+border_radius+edge_shift, y+height-(border_radius + thickness)), (border_radius, border_radius), 90, 0, 90, fill_color, -1)
+
+        cv2.rectangle(img, (x+border_radius, y+edge_shift), (x+width - border_radius, y+height-thickness), fill_color, -1)
+        cv2.rectangle(img, (x+edge_shift, y+border_radius), (x+width - thickness, y+height  - border_radius), fill_color, -1)
+
+    #draw lines
+    #top
+    cv2.line(img, (x+border_radius, y+edge_shift), (x+width - border_radius, y+edge_shift), color, thickness)
+    #bottom
+    cv2.line(img, (x+border_radius, y+height-thickness), (x+width - border_radius, y+height-thickness), color, thickness)
+    #left
+    cv2.line(img, (x+edge_shift, y+border_radius), (x+edge_shift, y+height  - border_radius), color, thickness)
+    #right
+    cv2.line(img, (x+width - thickness, y+border_radius), (x+width - thickness, y+height  - border_radius), color, thickness)
+
+    #corners
+    cv2.ellipse(img, (x+border_radius+ edge_shift, y+border_radius+edge_shift), (border_radius, border_radius), 180, 0, 90, color, thickness)
+    cv2.ellipse(img, (x+width-(border_radius+thickness), y+border_radius), (border_radius, border_radius), 270, 0, 90, color, thickness)
+    cv2.ellipse(img, (x+width-(border_radius+thickness), y+height-(border_radius + thickness)), (border_radius, border_radius), 0, 0, 90, color, thickness)
+    cv2.ellipse(img, (x+border_radius+edge_shift, y+height-(border_radius + thickness)), (border_radius, border_radius), 90, 0, 90, color, thickness)
+
+    return img
+
+def draw_text_to_frame(frame, text, position, font, size, color, thickness):
+    textsize = cv2.getTextSize(str(text), font, size, thickness)[0]
+    off_x = textsize[0] // 2
+    off_y = textsize[1] // 2
+    adj_pos = (position[0]-off_x, position[1]-off_y)
+    cv2.putText(frame, text, adj_pos, font, size, color, thickness)
+
 
 def rotate(image, angle):
     image_center = tuple(np.array(image.shape[1::-1]) / 2)
@@ -193,45 +232,35 @@ def rotate(image, angle):
     result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
     return result 
 
-wheel = cv2.resize(cv2.imread('assets/steering_wheel.png'), (200,200))
-font = cv2.FONT_HERSHEY_SIMPLEX
 
 def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed):
-    frame = cv2.resize(frame, (600,300))
-    visual_frame = np.zeros((700,1000,3), dtype=np.uint8)
-    visual_frame[:frame.shape[0],:frame.shape[1]] = frame
-    cv2.putText(visual_frame, "Steering Angle", (720,50),font,0.7,(255,255,255),2)
-    wheel_cpy = rotate(wheel, wheel_angle)
-    visual_frame[100:100+wheel_cpy.shape[0],700:700+wheel_cpy.shape[1]] = wheel_cpy
+    wheel_cpy = rotate(WHEEL, wheel_angle)
+    x = frame.shape[1]-175
+    y = 25
+    frame[y:y+wheel_cpy.shape[0],x:x+wheel_cpy.shape[1],:] = cv2.add(frame[y:y+wheel_cpy.shape[0],x:x+wheel_cpy.shape[1],:], wheel_cpy)
 
-    textsize = cv2.getTextSize(str(wheel_angle), font, 0.7, 2)[0]
+    frame = rounded_rectangle(frame, (40,15), 120, 150, 30, 1, (255, 255, 255), fill=True)
 
-    offX = textsize[0] // 2
-    offY = textsize[1] // 2
+    draw_text_to_frame(frame, str(wheel_angle), (x+(wheel_cpy.shape[1]//2), y+(wheel_cpy.shape[0]//2)+20), FONT, 0.6, (255,255,255), 1)
 
-    cv2.putText(visual_frame, str(wheel_angle), (700+(wheel_cpy.shape[1]//2)-offX, 100+(wheel_cpy.shape[0]//2)+offY), font, 0.7, (0,0,0), 2)
+    graph_1 = bar_graph([throttle_pos], [''], 1, (275,275))
+    graph_2 = bar_graph([brake_pos], [''], 1, (275,275))
 
-    graph_1 = bar_graph([throttle_pos], ['Throttle Pos'], 1, (275,275))
-    graph_2 = bar_graph([brake_pos], ['Brake Pos'], 1, (275,275))
+    cv2.putText(frame, "Throttle: "+str(throttle_pos), ((graph_1.shape[1]//2),410),FONT,0.7,(255,255,255), 1)
 
-    textsize = cv2.getTextSize("Throttle", font, 0.7, 2)[0]
+    frame[425:425+graph_1.shape[0],20:20+graph_1.shape[1]] = graph_1
 
-    offX = textsize[0] // 2
+    cv2.putText(frame, "Brake: "+str(brake_pos), (graph_1.shape[1]+20+(graph_2.shape[1]//2),410),FONT,0.7,(255,255,255), 1)
 
-    cv2.putText(visual_frame, "Throttle: "+str(throttle_pos), ((graph_1.shape[1]//2),410),font,0.7,(255,255,255), 2)
+    frame[425:425+graph_2.shape[0],20+graph_1.shape[1]+20:20+graph_1.shape[1]+20+graph_2.shape[1]] = graph_2
 
-    visual_frame[425:425+graph_1.shape[0],20:20+graph_1.shape[1]] = graph_1
+    draw_text_to_frame(frame, str(speed), (100, 100), FONT, 2, (255,255,255), 2)
+    draw_text_to_frame(frame, "MPH", (100,150), FONT, 1, (255,255,255), 2)
 
-    cv2.putText(visual_frame, "Brake: "+str(brake_pos), (graph_1.shape[1]+20+(graph_2.shape[1]//2),410),font,0.7,(255,255,255), 2)
-
-    visual_frame[425:425+graph_2.shape[0],20+graph_1.shape[1]+20:20+graph_1.shape[1]+20+graph_2.shape[1]] = graph_2
-
-    cv2.putText(visual_frame, 'SPEED: '+str(speed)+'kph', (660, 520), font, 1, (255,255,255), 2)
-
-    cv2.imshow('Data Collection', visual_frame)
+    cv2.imshow('Data Collection', frame)
     #inter_out.write(visual_frame)
 
 if __name__ == "__main__":
-    visualization(np.ones((600,300,3))*255, 400, 0.5, 0.5, 20)
+    visualization(np.ones((720,1280,3), dtype=np.uint8)*255, 400, 0.5, 0.5, 20)
     cv2.waitKey(0)
     cv2.destroyAllWindows()

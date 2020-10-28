@@ -12,12 +12,14 @@ The the Neural Network model is adopted from NVIDIA where they use a Convolution
 * Refactor and objectify the codebase
 * Migrate Deep Learning model to pytorch
 * Take a new approach to the machine learning, design a different architecture
+    * MPC - Model Predictive Control
     * Use a Perception and planning approach instead of e2e actuator control
         * Neural Net
             * Input: camera -> Perception Model -> state vector -> Planning Model -> paths
             * Train e2e
         * Controls
             * Input: paths -> Control System -> actuator control (steer, accel/decel)
+    * How to label training data for the Neural net?
 * Build a better ui instead of using opencv
 * Build a control interface to send messages to the car
 

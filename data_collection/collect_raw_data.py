@@ -1,7 +1,7 @@
 from utils.visual_utils import *
-from selfdriving.car.toyota_4runner_2018.interface import Interface
+from selfdriving.car.toyota.interface import Interface
 import cv2
-import datetime
+from datetime import datetime
 import numpy as np 
 import sys, csv, os
 
@@ -19,7 +19,7 @@ try:
     cap.set(3, RESOLUTION[0])
     cap.set(4, RESOLUTION[1])
 
-    today_date = datetime.today()
+    today_date = str(datetime.date(datetime.now()))
 
     data_dir = '/home/greer/Documents/GCC_Data/4Runner'
     drives = os.listdir(data_dir)
@@ -40,7 +40,7 @@ try:
     outputfile = open(os.path.join(file_dir,file_name)+'.csv', 'w')
     csvwriter = csv.writer(outputfile)
     #Write Header
-    csvwriter.writerow(['Frame Id','Steering Angle','Gas Pedal Pos','Brake Pedal Pos', 'Speed'])
+    csvwriter.writerow(['Frame Id','SAS Raw Hex', 'Steering Angle', 'Steering Torque', 'Gas Raw Hex', 'Gas Pedal Pos', 'Brake Raw Hex', 'Brake Pedal Pos', 'Speed Raw Hex', 'Speed'])
     print('Writing csv file {}.csv. Press Ctrl-C to exit...\n'.format(file_name))
     
     while True:
@@ -53,7 +53,7 @@ try:
         
         frame = invert_frame(frame)
 
-        sas_angle, accel_pos, brake_pos, speed = interface.get_can_messages()
+        sas_raw, sas_angle, sas_torque, accel_raw, accel_pos, brake_raw, brake_pos, speed_raw, speed = interface.get_can_messages()
         COUNT+=1
 
         visualization(frame, sas_angle, accel_pos, brake_pos, speed, fullscreen=FULLSCREEN)
@@ -61,7 +61,7 @@ try:
         if COUNT % COLLECT_FPS == 0:
             frame_id = 'frame_{}.png'.format(COUNT)
             cv2.imwrite(os.path.join(image_dir, frame_id), frame)
-            csvwriter.writerow([frame_id, sas_angle, accel_pos, brake_pos, speed])
+            csvwriter.writerow([frame_id, sas_raw, sas_angle, sas_torque, accel_raw, accel_pos, brake_raw, brake_pos, speed_raw, speed])
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             raise KeyboardInterrupt

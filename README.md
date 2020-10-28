@@ -11,7 +11,14 @@ The the Neural Network model is adopted from NVIDIA where they use a Convolution
 * Clean up files, make things neat
 * Refactor and objectify the codebase
 * Migrate Deep Learning model to pytorch
-* Build a web interface instead of using opencv
+* Take a new approach to the machine learning, design a different architecture
+** Use a Perception and planning approach instead of e2e actuator control
+*** Neural Net
+**** Input: camera -> Perception Model -> state vector -> Planning Model -> paths
+**** Train e2e
+*** Controls
+**** Input: paths -> Control System -> actuator control (steer, accel/decel)
+* Build a better ui instead of using opencv
 * Build a control interface to send messages to the car
 
 ## CONV Net Architecture

@@ -234,7 +234,7 @@ def rotate(image, angle):
     return result 
 
 
-def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed):
+def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed, fullscreen=False):
     WHEEL = cv2.resize(cv2.imread(os.environ['PYTHONPATH']+'/assets/steering_wheel_white.png', cv2.IMREAD_UNCHANGED), (200,200))
     mask = WHEEL[:,:,3]
     WHEEL = WHEEL[:,:,0:3]
@@ -267,6 +267,9 @@ def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed):
     draw_text_to_frame(frame, str(int(speed)), (100, 100), FONT, 2, (255,255,255), 2)
     draw_text_to_frame(frame, "MPH", (100,150), FONT, 1, (255,255,255), 2)
 
+    if fullscreen:
+        cv2.namedWindow('Data Collection', cv2.WND_PROP_FULLSCREEN)
+        cv2.setWindowProperty('Data Collection',cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
     cv2.imshow('Data Collection', frame)
 
 if __name__ == "__main__":

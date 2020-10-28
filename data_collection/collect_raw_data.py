@@ -9,6 +9,13 @@ FPS = 30
 COUNT = 0
 COLLECT_FPS = 10
 
+interface = Interface()
+
+cap = cv2.VideoCapture('/dev/video2')
+cap.set(cv2.CAP_PROP_FPS, FPS)
+cap.set(3, RESOLUTION[0])
+cap.set(4, RESOLUTION[1])
+
 file_name = sys.argv[1]
 file_dir = '/home/greer/Documents/GCC_Data/4Runner/'+file_name
 image_dir = os.path.join(file_dir, 'images')
@@ -19,13 +26,6 @@ else:
     print('Cannot Override Existing Folder')
     print('Exiting')
     sys.exit(0)
-
-interface = Interface()
-
-cap = cv2.VideoCapture('/dev/video2')
-cap.set(cv2.CAP_PROP_FPS, FPS)
-cap.set(3, RESOLUTION[0])
-cap.set(4, RESOLUTION[1])
 
 try:
     

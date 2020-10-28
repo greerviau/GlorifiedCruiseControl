@@ -235,7 +235,7 @@ def rotate(image, angle):
 
 
 def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed):
-    WHEEL = cv2.resize(cv2.imread(os.environ['PYTHONPATH']+'/assets/steering_wheel.png', cv2.IMREAD_UNCHANGED), (200,200))
+    WHEEL = cv2.resize(cv2.imread(os.environ['PYTHONPATH']+'/assets/steering_wheel_white.png', cv2.IMREAD_UNCHANGED), (200,200))
     mask = WHEEL[:,:,3]
     WHEEL = WHEEL[:,:,0:3]
     wheel_cpy = rotate(WHEEL, wheel_angle)
@@ -251,7 +251,7 @@ def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed):
     frame[y:y+wheel_cpy.shape[0],x:x+wheel_cpy.shape[1],:] = cv2.add(frame[y:y+wheel_cpy.shape[0],x:x+wheel_cpy.shape[1],:], wheel_cpy)
     frame = rounded_rectangle(frame, (40,15), 120, 150, 30, 1, (255, 255, 255), fill=True)
 
-    draw_text_to_frame(frame, str(wheel_angle), (x+(wheel_cpy.shape[1]//2), y+(wheel_cpy.shape[0]//2)+20), FONT, 0.6, (255,255,255), 1)
+    draw_text_to_frame(frame, str(wheel_angle), (x+(wheel_cpy.shape[1]//2), y+(wheel_cpy.shape[0]//2)+20), FONT, 0.6, (0,0,0), 2)
     '''
     graph_1 = bar_graph([throttle_pos], [''], 1, (275,275))
     graph_2 = bar_graph([brake_pos], [''], 1, (275,275))
@@ -268,9 +268,8 @@ def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed):
     draw_text_to_frame(frame, "MPH", (100,150), FONT, 1, (255,255,255), 2)
 
     cv2.imshow('Data Collection', frame)
-    #inter_out.write(visual_frame)
 
 if __name__ == "__main__":
-    visualization(np.ones((720,1280,3), dtype=np.uint8)*255, 400, 0.5, 0.5, 20)
+    visualization(np.zeros((720,1280,3), dtype=np.uint8)*255, -400.5, 0.5, 0.5, 20)
     cv2.waitKey(0)
     cv2.destroyAllWindows()

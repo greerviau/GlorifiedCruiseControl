@@ -208,7 +208,6 @@ class Interface(object):
             
             if hex(address) == self.SAS_PIN:
                 sas_hex_codes = dat_array
-                print(dat_hex)
             
             elif hex(address) == self.ACCEL_PIN:
                 accel_hex_codes = dat_array

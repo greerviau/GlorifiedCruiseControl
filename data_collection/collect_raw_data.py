@@ -14,7 +14,8 @@ COLLECT_FPS = 1 #capture every frame
 try:
     interface = Interface()
 
-    cap = cv2.VideoCapture('/dev/video2')
+    cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_AUTOFOCUS, False)
     cap.set(cv2.CAP_PROP_FPS, FPS)
     cap.set(3, RESOLUTION[0])
     cap.set(4, RESOLUTION[1])

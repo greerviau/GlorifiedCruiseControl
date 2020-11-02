@@ -242,18 +242,7 @@ def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed, fullscreen
     frame[y:y+wheel_cpy.shape[0],x:x+wheel_cpy.shape[1],:][wheel_cpy == 255] = 0
     frame[y:y+wheel_cpy.shape[0],x:x+wheel_cpy.shape[1],:] = cv2.add(frame[y:y+wheel_cpy.shape[0],x:x+wheel_cpy.shape[1],:], wheel_cpy)
     draw_text_to_frame(frame, str(wheel_angle), (x+(wheel_cpy.shape[1]//2), y+(wheel_cpy.shape[0]//2)+20), FONT, 0.6, (0,0,0), 2)
-    '''
-    graph_1 = bar_graph([throttle_pos], [''], 1, (275,275))
-    graph_2 = bar_graph([brake_pos], [''], 1, (275,275))
-
-    cv2.putText(frame, "Throttle: "+str(throttle_pos), ((graph_1.shape[1]//2),410),FONT,0.7,(255,255,255), 1)
-
-    frame[425:425+graph_1.shape[0],20:20+graph_1.shape[1]] = graph_1
-
-    cv2.putText(frame, "Brake: "+str(brake_pos), (graph_1.shape[1]+20+(graph_2.shape[1]//2),410),FONT,0.7,(255,255,255), 1)
-
-    frame[425:425+graph_2.shape[0],20+graph_1.shape[1]+20:20+graph_1.shape[1]+20+graph_2.shape[1]] = graph_2
-    '''
+    
     frame = rounded_rectangle(frame, (40,15), 120, 150, 30, 1, (255, 255, 255), fill=True)
     draw_text_to_frame(frame, str(int(speed)), (100, 100), FONT, 2, (255,255,255), 2)
     draw_text_to_frame(frame, "MPH", (100,150), FONT, 1, (255,255,255), 2)

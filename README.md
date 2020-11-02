@@ -12,6 +12,7 @@ The the Neural Network model is adopted from NVIDIA where they use a Convolution
 * Refactor and objectify the codebase
 * Migrate Deep Learning model to pytorch
 * Take a new approach to the machine learning, design a different architecture
+    * Implement Efficientnet
     * MPC - Model Predictive Control
     * Use a Perception and planning approach instead of e2e actuator control
         * Neural Net

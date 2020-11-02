@@ -4,8 +4,7 @@
     </header>
     <body>
         <h1>Header</h1>
-        <video width="100%" controls id = "video_feed">
-            <source src="test_1.mp4" type="video/mp4">
-        </video>
+        <img src="{{ url_for('video_feed') }}" width="50%" controls id = "video_feed">
+        <p src="{{ url_for('steering_angle') }}">
     </body>
 </html>

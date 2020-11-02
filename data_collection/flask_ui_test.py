@@ -6,14 +6,15 @@ import cv2
 import time
 
 output_frame = None
+steering_angle = 50
 lock = threading.Lock()
 
 app = Flask(__name__)
 
-vs = cv2.VideoCapture(0)
-vs.set(cv2.CAP_PROP_FPS, 30)
-vs.set(3, 640)
-vs.set(4, 360)
+vs = cv2.VideoCapture('test_1.mp4')
+#vs.set(cv2.CAP_PROP_FPS, 30)
+#vs.set(3, 640)
+#vs.set(4, 360)
 time.sleep(2.0)
 
 @app.route('/')
@@ -28,7 +29,7 @@ def capture_video():
         with lock:
             output_frame = frame.copy()
 
-def generate():
+def get_frame():
     global output_frame, lock
 
     while True:
@@ -43,9 +44,19 @@ def generate():
         
         yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
 
+def get_steering_angle():
+    global steering_angle, lock
+
+    while True:
+        yield(steering_angle)
+
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
+    return Response(get_frame(), mimetype="multipart/x-mixed-replace; boundary=frame")
+
+@app.route('/steering_angle')
+def steering_angle():
+    return Response(get_steering_angle())
 
 if __name__ == "__main__":
     t = threading.Thread(target=capture_video)

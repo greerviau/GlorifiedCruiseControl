@@ -235,35 +235,15 @@ def rotate(image, angle):
 
 
 def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed, fullscreen=False):
-    WHEEL = cv2.resize(cv2.imread(os.environ['PYTHONPATH']+'/assets/steering_wheel_white.png', cv2.IMREAD_UNCHANGED), (200,200))
-    mask = WHEEL[:,:,3]
-    WHEEL = WHEEL[:,:,0:3]
+    WHEEL = cv2.resize(cv2.imread(os.environ['PYTHONPATH']+'/assets/steering_wheel_white.png'), (200,200))
     wheel_cpy = rotate(WHEEL, wheel_angle)
-    mask = rotate(mask, wheel_angle)
-    new_mask = np.zeros_like(wheel_cpy)
-    new_mask[:,:,0] = mask
-    new_mask[:,:,1] = mask
-    new_mask[:,:,2] = mask
-    mask = new_mask
     x = frame.shape[1]-225
     y = 25
-    frame[y:y+wheel_cpy.shape[0],x:x+wheel_cpy.shape[1],:] = cv2.subtract(frame[y:y+wheel_cpy.shape[0],x:x+wheel_cpy.shape[1],:], mask)
+    frame[y:y+wheel_cpy.shape[0],x:x+wheel_cpy.shape[1],:][wheel_cpy == 255] = 0
     frame[y:y+wheel_cpy.shape[0],x:x+wheel_cpy.shape[1],:] = cv2.add(frame[y:y+wheel_cpy.shape[0],x:x+wheel_cpy.shape[1],:], wheel_cpy)
-    frame = rounded_rectangle(frame, (40,15), 120, 150, 30, 1, (255, 255, 255), fill=True)
-
     draw_text_to_frame(frame, str(wheel_angle), (x+(wheel_cpy.shape[1]//2), y+(wheel_cpy.shape[0]//2)+20), FONT, 0.6, (0,0,0), 2)
-    '''
-    graph_1 = bar_graph([throttle_pos], [''], 1, (275,275))
-    graph_2 = bar_graph([brake_pos], [''], 1, (275,275))
-
-    cv2.putText(frame, "Throttle: "+str(throttle_pos), ((graph_1.shape[1]//2),410),FONT,0.7,(255,255,255), 1)
-
-    frame[425:425+graph_1.shape[0],20:20+graph_1.shape[1]] = graph_1
-
-    cv2.putText(frame, "Brake: "+str(brake_pos), (graph_1.shape[1]+20+(graph_2.shape[1]//2),410),FONT,0.7,(255,255,255), 1)
-
-    frame[425:425+graph_2.shape[0],20+graph_1.shape[1]+20:20+graph_1.shape[1]+20+graph_2.shape[1]] = graph_2
-    '''
+    
+    frame = rounded_rectangle(frame, (40,15), 120, 150, 30, 1, (255, 255, 255), fill=True)
     draw_text_to_frame(frame, str(int(speed)), (100, 100), FONT, 2, (255,255,255), 2)
     draw_text_to_frame(frame, "MPH", (100,150), FONT, 1, (255,255,255), 2)
 

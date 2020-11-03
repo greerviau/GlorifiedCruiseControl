@@ -1,9 +1,8 @@
 from utils.visual_utils import *
-from selfdriving.car.toyota_4runner_2018.interface import Interface
-import cv2
-import datetime
+from selfdriving.car.toyota.interface import Interface
+from datetime import datetime
 import numpy as np 
-import sys, csv, os
+import cv2, sys, csv, os
 
 RESOLUTION = (1280, 720)
 FULLSCREEN = False
@@ -12,15 +11,18 @@ COUNT = 0
 COLLECT_FPS = 1 #capture every frame
 
 try:
+    #Create CAN interface
     interface = Interface()
 
-    cap = cv2.VideoCapture('/dev/video2')
+    #Create video capture and set hyperparams
+    cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_AUTOFOCUS, False)
     cap.set(cv2.CAP_PROP_FPS, FPS)
     cap.set(3, RESOLUTION[0])
     cap.set(4, RESOLUTION[1])
 
-    today_date = datetime.today()
-
+    #Create data dir
+    today_date = str(datetime.date(datetime.now()))
     data_dir = '/home/greer/Documents/GCC_Data/4Runner'
     drives = os.listdir(data_dir)
     todays_drives = [d for d in drives if today_date in d]
@@ -33,41 +35,39 @@ try:
         os.makedirs(file_dir)
         os.makedirs(image_dir)
     else:
-        print('Cannot Override Existing Folder')
-        print('Exiting')
-        raise KeyboardInterrupt
+        raise Exception('Cannot Override Existing Folder')
     
+    #Create csv file
     outputfile = open(os.path.join(file_dir,file_name)+'.csv', 'w')
     csvwriter = csv.writer(outputfile)
     #Write Header
-    csvwriter.writerow(['Frame Id','Steering Angle','Gas Pedal Pos','Brake Pedal Pos', 'Speed'])
+    csvwriter.writerow(['Frame Id','SAS Raw Hex', 'Steering Angle', 'Steering Torque', 'Gas Raw Hex', 'Gas Pedal Pos', 'Brake Raw Hex', 'Brake Pedal Pos', 'Speed Raw Hex', 'Speed'])
     print('Writing csv file {}.csv. Press Ctrl-C to exit...\n'.format(file_name))
     
     while True:
         
         ret, frame = cap.read()
-        
         if not ret:
-            print('No Frame Detected')
-            raise KeyboardInterrupt
+            raise Exception('No Frame Detected')
         
         frame = invert_frame(frame)
 
-        sas_angle, accel_pos, brake_pos, speed = interface.get_can_messages()
+        sas_raw, sas_angle, sas_torque, accel_raw, accel_pos, brake_raw, brake_pos, speed_raw, speed = interface.get_can_messages()
         COUNT+=1
 
-        visualization(frame, sas_angle, accel_pos, brake_pos, speed, fullscreen=FULLSCREEN)
+        visualization(frame.copy(), sas_angle, accel_pos, brake_pos, speed, fullscreen=FULLSCREEN)
 
+        #Capture every N frames
         if COUNT % COLLECT_FPS == 0:
             frame_id = 'frame_{}.png'.format(COUNT)
-            cv2.imwrite(os.path.join(image_dir, frame_id), frame)
-            csvwriter.writerow([frame_id, sas_angle, accel_pos, brake_pos, speed])
+            cv2.imwrite(os.path.join(image_dir, frame_id), cv2.resize(frame, (640, 360)))
+            csvwriter.writerow([frame_id, sas_raw, sas_angle, sas_torque, accel_raw, accel_pos, brake_raw, brake_pos, speed_raw, speed])
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             raise KeyboardInterrupt
                     
-except KeyboardInterrupt:
-    
+except Exception as ex:
+    print(ex)
     print('Exiting')
     outputfile.close()
     cap.release()

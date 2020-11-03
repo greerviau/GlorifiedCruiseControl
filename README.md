@@ -8,11 +8,10 @@ This process is know as [Behavioral Cloning](https://arxiv.org/abs/1805.01954). 
 The the Neural Network model is adopted from NVIDIA where they use a Convolutional Neural Net to take video frames of the road and predict driving commands.<br/>
 
 ## TODO
-* Clean up files, make things neat
 * Refactor and objectify the codebase
 * Migrate Deep Learning model to pytorch
 * Take a new approach to the machine learning, design a different architecture
-    * MPC - Model Predictive Control
+    * Implement Efficientnet
     * Use a Perception and planning approach instead of e2e actuator control
         * Neural Net
             * Input: camera -> Perception Model -> state vector -> Planning Model -> paths
@@ -20,6 +19,8 @@ The the Neural Network model is adopted from NVIDIA where they use a Convolution
         * Controls
             * Input: paths -> Control System -> actuator control (steer, accel/decel)
     * How to label training data for the Neural net?
+        * Use SLAM to create trajectories for each video frame?
+    * MPC - Model Predictive Control for actuator control from paths
 * Build a better ui instead of using opencv
 * Build a control interface to send messages to the car
 

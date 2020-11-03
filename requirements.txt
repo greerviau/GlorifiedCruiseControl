@@ -1,0 +1,4 @@
+opencv-python>=4.2.0.32
+numpy>=1.18.1
+tqdm
+pandacan>=0.0.9

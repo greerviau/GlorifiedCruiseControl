@@ -1,4 +1,5 @@
 from utils.visual_utils import *
+from utils.utils import gstreamer_pipeline
 from selfdriving.car.toyota.interface import Interface
 from datetime import datetime
 import numpy as np 
@@ -9,14 +10,13 @@ FULLSCREEN = False
 FPS = 30
 COUNT = 0
 COLLECT_FPS = 1 #capture every frame
-GSTREAMER_PIPELINE = 'nvarguscamerasrc ! video/x-raw(memory:NVMM), width=3280, height=2464, format=(string)NV12, framerate=21/1 ! nvvidconv flip-method=0 ! video/x-raw, width=960, height=616, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink'
 
 try:
     #Create CAN interface
     interface = Interface()
 
     #Create video capture and set hyperparams
-    cap = cv2.VideoCapture(GSTREAMER_PIPELINE, cv2.CAP_GSTREAMER)
+    cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
     cap.set(cv2.CAP_PROP_AUTOFOCUS, False)
     cap.set(cv2.CAP_PROP_FPS, FPS)
     cap.set(3, RESOLUTION[0])

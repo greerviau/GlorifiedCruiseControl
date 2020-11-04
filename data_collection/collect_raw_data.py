@@ -9,21 +9,25 @@ FULLSCREEN = False
 FPS = 30
 COUNT = 0
 COLLECT_FPS = 1 #capture every frame
+GSTREAMER_PIPELINE = 'nvarguscamerasrc ! video/x-raw(memory:NVMM), width=3280, height=2464, format=(string)NV12, framerate=21/1 ! nvvidconv flip-method=0 ! video/x-raw, width=960, height=616, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink'
 
 try:
     #Create CAN interface
     interface = Interface()
 
     #Create video capture and set hyperparams
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(GSTREAMER_PIPELINE, cv2.CAP_GSTREAMER)
     cap.set(cv2.CAP_PROP_AUTOFOCUS, False)
     cap.set(cv2.CAP_PROP_FPS, FPS)
     cap.set(3, RESOLUTION[0])
     cap.set(4, RESOLUTION[1])
 
+    data_dir = os.path.join(os.path.normpath(os.environ['PYTHONPATH'] + os.sep + os.pardir), 'GCC_Data/4Runner')
+    if not os.path.exists(data_dir):
+        os.makedirs
+
     #Create data dir
     today_date = str(datetime.date(datetime.now()))
-    data_dir = '/home/greer/Documents/GCC_Data/4Runner'
     drives = os.listdir(data_dir)
     todays_drives = [d for d in drives if today_date in d]
 
@@ -69,7 +73,10 @@ try:
 except Exception as ex:
     print(ex)
     print('Exiting')
-    outputfile.close()
-    cap.release()
     cv2.destroyAllWindows()
+    try:
+        cap.release()
+        outputfile.close()
+    except:
+        pass
     sys.exit(0)

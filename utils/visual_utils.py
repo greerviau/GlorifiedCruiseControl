@@ -6,7 +6,6 @@ import random
 import os
 
 FONT = cv2.FONT_HERSHEY_SIMPLEX
-WHEEL = cv2.resize(cv2.imread(os.environ['PYTHONPATH']+'/assets/steering_wheel.png', cv2.IMREAD_UNCHANGED), (150,150))
 
 def invert_frame(frame):
     (H,W) = frame.shape[:2]

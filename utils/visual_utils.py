@@ -233,7 +233,7 @@ def rotate(image, angle):
     return result 
 
 
-def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed, fullscreen=False):
+def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed, collecting, fullscreen=False):
     WHEEL = cv2.resize(cv2.imread(os.environ['PYTHONPATH']+'/assets/steering_wheel_white.png'), (200,200))
     wheel_cpy = rotate(WHEEL, wheel_angle)
     x = frame.shape[1]-225
@@ -245,6 +245,11 @@ def visualization(frame, wheel_angle, throttle_pos, brake_pos, speed, fullscreen
     frame = rounded_rectangle(frame, (40,15), 120, 150, 30, 1, (255, 255, 255), fill=True)
     draw_text_to_frame(frame, str(int(speed)), (100, 100), FONT, 2, (255,255,255), 2)
     draw_text_to_frame(frame, "MPH", (100,150), FONT, 1, (255,255,255), 2)
+
+    if collecting:
+        draw_text_to_frame(frame, 'Collecting', (640,100), FONT, 1, (0,255,0), 2)
+    else:
+        draw_text_to_frame(frame, 'Paused', (640,100), FONT, 1, (0,0,255), 2)
 
     if fullscreen:
         cv2.namedWindow('Data Collection', cv2.WND_PROP_FULLSCREEN)

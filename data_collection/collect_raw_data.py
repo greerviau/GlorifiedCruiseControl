@@ -6,10 +6,11 @@ import numpy as np
 import cv2, sys, csv, os
 
 RESOLUTION = (1280, 720)
-FULLSCREEN = False
+FULLSCREEN = True
 FPS = 30
 COUNT = 0
 COLLECT_FPS = 1 #capture every frame
+SPEED_TO_COLLECT = 10
 
 try:
     #Create CAN interface
@@ -58,14 +59,19 @@ try:
 
         sas_raw, sas_angle, sas_torque, accel_raw, accel_pos, brake_raw, brake_pos, speed_raw, speed = interface.get_can_messages()
         COUNT+=1
+        collecting = True
+        if speed < SPEED_TO_COLLECT:
+            collecting = False
 
-        visualization(frame.copy(), sas_angle, accel_pos, brake_pos, speed, fullscreen=FULLSCREEN)
+        visualization(frame.copy(), sas_angle, accel_pos, brake_pos, speed, collecting, fullscreen=FULLSCREEN)
 
-        #Capture every N frames
-        if COUNT % COLLECT_FPS == 0:
-            frame_id = 'frame_{}.png'.format(COUNT)
-            cv2.imwrite(os.path.join(image_dir, frame_id), cv2.resize(frame, (640, 360)))
-            csvwriter.writerow([frame_id, sas_raw, sas_angle, sas_torque, accel_raw, accel_pos, brake_raw, brake_pos, speed_raw, speed])
+        #Capture only if going over a certain speed
+        if collecting:
+            #Capture every N frames
+            if COUNT % COLLECT_FPS == 0:
+                frame_id = 'frame_{}.png'.format(COUNT)
+                cv2.imwrite(os.path.join(image_dir, frame_id), cv2.resize(frame, (640, 360)))
+                csvwriter.writerow([frame_id, sas_raw, sas_angle, sas_torque, accel_raw, accel_pos, brake_raw, brake_pos, speed_raw, speed])
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             raise KeyboardInterrupt

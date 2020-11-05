@@ -25,7 +25,7 @@ try:
 
     data_dir = os.path.join(os.path.normpath(os.environ['PYTHONPATH'] + os.sep + os.pardir), 'GCC_Data/4Runner')
     if not os.path.exists(data_dir):
-        os.makedirs
+        os.makedirs(data_dir)
 
     #Create data dir
     today_date = str(datetime.date(datetime.now()))

@@ -1,6 +1,6 @@
 import cv2
 
-def gstreamer_pipeline(capture_width=1280,capture_height=720,display_width=1280,display_height=720,framerate=60,flip_method=0):
+def gstreamer_pipeline(capture_width=640,capture_height=360,display_width=640,display_height=360,framerate=30,flip_method=0):
     return ("nvarguscamerasrc ! "
         "video/x-raw(memory:NVMM), "
         "width=(int)%d, height=(int)%d, "

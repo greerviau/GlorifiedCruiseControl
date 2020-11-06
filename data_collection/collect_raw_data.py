@@ -18,10 +18,10 @@ try:
 
     #Create video capture and set hyperparams
     cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
-    cap.set(cv2.CAP_PROP_AUTOFOCUS, False)
-    cap.set(cv2.CAP_PROP_FPS, FPS)
-    cap.set(3, RESOLUTION[0])
-    cap.set(4, RESOLUTION[1])
+    #cap.set(cv2.CAP_PROP_AUTOFOCUS, False)
+    #cap.set(cv2.CAP_PROP_FPS, FPS)
+    #cap.set(3, RESOLUTION[0])
+    #cap.set(4, RESOLUTION[1])
 
     data_dir = os.path.join(os.path.normpath(os.environ['PYTHONPATH'] + os.sep + os.pardir), 'GCC_Data/4Runner')
     if not os.path.exists(data_dir):
@@ -63,7 +63,7 @@ try:
         if speed < SPEED_TO_COLLECT:
             collecting = False
 
-        visualization(frame.copy(), sas_angle, accel_pos, brake_pos, speed, collecting, fullscreen=FULLSCREEN)
+        visualization(cv2.resize(frame.copy(),RESOLUTION), sas_angle, accel_pos, brake_pos, speed, collecting, fullscreen=FULLSCREEN)
 
         #Capture only if going over a certain speed
         if collecting:

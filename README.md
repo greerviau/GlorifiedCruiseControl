@@ -18,10 +18,11 @@ The the Neural Network model is adopted from NVIDIA where they use a Convolution
             * Train e2e
         * Controls
             * Input: paths -> Control System -> actuator control (steer, accel/decel)
+            * Use PID controller for this
     * How to label training data for the Neural net?
         * Use SLAM to create trajectories for each video frame?
+        * Use GPS and IMU combined with SLAM using Kalman filter
     * MPC - Model Predictive Control for actuator control from paths
-* Build a better ui instead of using opencv
 * Build a control interface to send messages to the car
 
 ## CONV Net Architecture
